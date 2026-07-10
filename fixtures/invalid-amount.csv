@@ -1,0 +1,5 @@
+item,amount
+valid-a,10
+not-a-number,abc
+empty,
+valid-b,20.5

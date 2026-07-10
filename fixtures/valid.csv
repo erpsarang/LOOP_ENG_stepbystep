@@ -1,0 +1,4 @@
+item,amount
+whole, 1000 
+decimal,1000.5
+negative,-500

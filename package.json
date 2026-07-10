@@ -1,0 +1,14 @@
+{
+  "name": "csv-amount-cli",
+  "version": "1.0.0",
+  "description": "CSV 파일의 유효한 amount 합계와 오류 행 수를 계산하는 Node.js CLI",
+  "private": true,
+  "engines": {
+    "node": ">=14.14"
+  },
+  "scripts": {
+    "start": "node app.js input.csv",
+    "test": "node test.js",
+    "verify": "node verify.js"
+  }
+}
