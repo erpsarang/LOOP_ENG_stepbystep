@@ -54,3 +54,9 @@
 - [x] TODO 26: `--summary` 인자와 사람이 읽기 좋은 요약 포맷을 추가한다.
 - [x] TODO 27: summary 단위 테스트와 품질 게이트 검증을 추가한다.
 - [x] TODO 28: README 사용법과 LOOP 실행 결과를 기록한다.
+
+## 18번째 LOOP — 실험 브랜치 변경사항 커밋
+
+- [x] TODO 29: 실험 브랜치와 작업 트리 상태를 확인하고 품질 게이트를 실행한다.
+- [x] TODO 30: summary 기능 변경을 `feat: add summary output option`으로 커밋한다.
+- [x] TODO 31: 커밋 결과를 LOOP 문서에 기록하고 별도 문서 커밋으로 남긴다.

@@ -165,3 +165,12 @@
 - 문서: README와 HANDOFF에 summary 사용법 및 품질 게이트 범위를 반영.
 - `npm run verify`: 성공, 종료 코드 0, 7개 검증 모두 PASS.
 - 재시도: 0회.
+
+## 18번째 LOOP — 실험 브랜치 변경사항 커밋
+
+- 브랜치: `experiment/summary-option` 확인. `master`에서 작업하지 않음.
+- 커밋 전 상태: summary 관련 7개 파일이 수정되고 스테이징되지 않은 상태.
+- 커밋 전 `npm run verify`: 성공, 종료 코드 0, 7개 검증 모두 PASS.
+- 기능 커밋: `dc9f671 feat: add summary output option` 생성 성공.
+- 문서 기록: 이번 실행 결과와 완료 TODO를 별도 문서 커밋으로 기록.
+- 재시도: 0회.
