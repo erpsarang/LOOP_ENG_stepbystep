@@ -91,6 +91,15 @@ function formatJsonResult(summary, warnings) {
   return JSON.stringify(result, null, 2);
 }
 
+function formatSummaryResult(summary, warnings) {
+  return [
+    'CSV 처리 요약',
+    `- 합계: ${summary.total}`,
+    `- 오류 행 수: ${summary.errorCount}`,
+    `- 경고 수: ${warnings.length}`,
+  ].join('\n');
+}
+
 function sumAmount(csvText, warn = () => {}) {
   return summarizeAmounts(parseCsv(csvText), warn);
 }
@@ -110,13 +119,19 @@ function runCli(filePath = 'input.csv', output = console, options = {}) {
 
   const warnings = [];
   const result = sumAmount(csvText, (message) => {
-    if (options.json) {
+    if (options.json || options.summary) {
       warnings.push(message);
     } else {
       output.warn(message);
     }
   });
-  output.log(options.json ? formatJsonResult(result, warnings) : formatResult(result));
+  if (options.json) {
+    output.log(formatJsonResult(result, warnings));
+  } else if (options.summary) {
+    output.log(formatSummaryResult(result, warnings));
+  } else {
+    output.log(formatResult(result));
+  }
 }
 
 function executeCli(filePath, output = console, options = {}) {
@@ -130,7 +145,8 @@ function executeCli(filePath, output = console, options = {}) {
 }
 
 function parseCliArgs(args) {
-  const unknownOption = args.find((arg) => arg.startsWith('-') && !['--json', '--help', '-h'].includes(arg));
+  const knownOptions = ['--json', '--summary', '--help', '-h'];
+  const unknownOption = args.find((arg) => arg.startsWith('-') && !knownOptions.includes(arg));
   if (unknownOption) {
     throw new Error(`알 수 없는 옵션입니다: ${unknownOption}`);
   }
@@ -140,19 +156,25 @@ function parseCliArgs(args) {
     throw new Error('CSV 파일은 하나만 지정할 수 있습니다.');
   }
 
+  if (args.includes('--json') && args.includes('--summary')) {
+    throw new Error('--json과 --summary는 함께 사용할 수 없습니다.');
+  }
+
   return {
     filePath: filePaths[0] || 'input.csv',
     json: args.includes('--json'),
+    summary: args.includes('--summary'),
     help: args.includes('--help') || args.includes('-h'),
   };
 }
 
 function formatHelp() {
   return [
-    '사용법: node app.js [CSV 파일] [--json]',
+    '사용법: node app.js [CSV 파일] [--json | --summary]',
     '',
     '옵션:',
     '  --json      결과를 JSON으로 출력합니다.',
+    '  --summary   결과를 사람이 읽기 좋은 요약으로 출력합니다.',
     '  -h, --help  도움말을 출력합니다.',
   ].join('\n');
 }
@@ -180,6 +202,7 @@ module.exports = {
   summarizeAmounts,
   formatResult,
   formatJsonResult,
+  formatSummaryResult,
   sumAmount,
   runCli,
   executeCli,

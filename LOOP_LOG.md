@@ -153,3 +153,37 @@
 - 스냅샷 범위: `.gitignore`, LOOP 문서, HANDOFF, fixtures와 전체 CLI 프로젝트 파일.
 - 커밋 메시지: `chore: release csv amount cli loop lab baseline`.
 - 커밋 결과: 첫 기준점 커밋 생성 성공. 이 결과를 로그에 포함하기 위해 동일 메시지로 amend하여 단일 커밋으로 유지.
+
+## 16번째 LOOP — summary 출력 옵션
+
+- 브랜치 확인: `experiment/summary-option`, 시작 시 작업 트리 clean. `master`에서 직접 작업하지 않음.
+- CLI 변경: `--summary` 옵션과 `formatSummaryResult` 추가. 합계, 오류 행 수, 경고 수를 사람이 읽는 형식으로 출력.
+- 출력 분리: summary 모드에서는 개별 경고를 stderr에 섞지 않고 경고 수로 집계.
+- 인자 검증: `--json`과 `--summary` 동시 사용을 오류로 처리.
+- 테스트: summary 포맷, 인자 파싱, 옵션 충돌, fixture 출력과 경고 비혼합을 검증.
+- 품질 게이트: `fixtures/invalid-amount.csv --summary` 실제 CLI 검증 추가.
+- 문서: README와 HANDOFF에 summary 사용법 및 품질 게이트 범위를 반영.
+- `npm run verify`: 성공, 종료 코드 0, 7개 검증 모두 PASS.
+- 재시도: 0회.
+
+## 18번째 LOOP — 실험 브랜치 변경사항 커밋
+
+- 브랜치: `experiment/summary-option` 확인. `master`에서 작업하지 않음.
+- 커밋 전 상태: summary 관련 7개 파일이 수정되고 스테이징되지 않은 상태.
+- 커밋 전 `npm run verify`: 성공, 종료 코드 0, 7개 검증 모두 PASS.
+- 기능 커밋: `dc9f671 feat: add summary output option` 생성 성공.
+- 문서 기록: 이번 실행 결과와 완료 TODO를 별도 문서 커밋으로 기록.
+- 재시도: 0회.
+
+## 19번째 LOOP — 실험 브랜치 병합 판단
+
+- 현재 브랜치: `experiment/summary-option`, 시작 시 작업 트리 clean.
+- 커밋 그래프: 실험 브랜치는 master 기준점 `3b9332a` 위에 기능 커밋 `dc9f671`과 문서 커밋 `a3a3935`가 직선으로 이어짐.
+- master 대비 범위: 7개 파일, summary 포맷·인자 처리·테스트·품질 게이트·사용 문서와 LOOP 기록에 한정.
+- 기존 동작: 일반 출력과 JSON 분기는 유지되고 도움말만 새 옵션을 반영. 기존 품질 게이트 항목 모두 PASS.
+- 테스트 충분성: 포맷, summary 인자, JSON 충돌, fixture 결과, 경고 비혼합과 실제 CLI 출력을 검증.
+- 문서 일관성: README, HANDOFF, LOOP_PLAN, LOOP_LOG가 구현과 품질 게이트 7개 항목을 일관되게 설명.
+- 범위 평가: 하나의 출력 옵션과 직접 관련된 테스트·문서만 추가되어 과도한 기능 확장 없음.
+- `npm run verify`: 성공, 종료 코드 0, 7개 검증 모두 PASS.
+- 병합 판단: **merge recommended**.
+- 병합 실행: 하지 않음. master 브랜치는 수정하지 않음.
