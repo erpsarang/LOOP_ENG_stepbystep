@@ -60,3 +60,9 @@
 - [x] TODO 29: 실험 브랜치와 작업 트리 상태를 확인하고 품질 게이트를 실행한다.
 - [x] TODO 30: summary 기능 변경을 `feat: add summary output option`으로 커밋한다.
 - [x] TODO 31: 커밋 결과를 LOOP 문서에 기록하고 별도 문서 커밋으로 남긴다.
+
+## 20번째 LOOP — 검증된 실험 브랜치 master 병합
+
+- [x] TODO 32: 실험 브랜치와 master를 각각 clean 상태에서 검증한다.
+- [x] TODO 33: `experiment/summary-option`을 `--no-ff` merge commit으로 master에 병합한다.
+- [x] TODO 34: 병합 후 품질 게이트와 그래프를 확인하고 결과를 기록한다.

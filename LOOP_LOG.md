@@ -187,3 +187,15 @@
 - `npm run verify`: 성공, 종료 코드 0, 7개 검증 모두 PASS.
 - 병합 판단: **merge recommended**.
 - 병합 실행: 하지 않음. master 브랜치는 수정하지 않음.
+
+## 20번째 LOOP — 검증된 실험 브랜치 master 병합
+
+- 병합 전 실험 브랜치: `experiment/summary-option`, 작업 트리 clean, `npm run verify` 7개 검증 PASS.
+- master 전환: 성공, 병합 전 작업 트리 clean.
+- 병합 전 master 검증: 기존 6개 품질 게이트 PASS.
+- 병합: `git merge --no-ff experiment/summary-option -m "merge: summary option"` 성공, 충돌 없음.
+- 병합 커밋: `34dc644 merge: summary option`.
+- 병합 후 검증: `npm run verify` 성공, 종료 코드 0, summary 포함 7개 검증 모두 PASS.
+- 그래프 확인: master merge commit의 두 부모 아래에 기준점과 실험 브랜치의 기능·문서 커밋이 보존됨.
+- 병합 직후 상태: master 작업 트리 clean.
+- 재시도 및 충돌 해결: 0회.
