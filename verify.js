@@ -64,6 +64,25 @@ const checks = [
       : '누락 파일 오류 메시지를 찾을 수 없습니다.',
   },
   {
+    name: '요약 CLI 출력',
+    displayCommand: `node app.js ${FIXTURES.invalidAmount.path} --summary`,
+    fixture: FIXTURES.invalidAmount.path,
+    command: nodeCommand,
+    args: ['app.js', FIXTURES.invalidAmount.path, '--summary'],
+    expectedStatus: FIXTURES.invalidAmount.expectedStatus,
+    validate: ({ stdout, stderr }) => {
+      const expected = [
+        'CSV 처리 요약',
+        `- 합계: ${FIXTURES.invalidAmount.total}`,
+        `- 오류 행 수: ${FIXTURES.invalidAmount.errorCount}`,
+        `- 경고 수: ${FIXTURES.invalidAmount.warningCount}`,
+      ].join('\n');
+      return stdout.trim() === expected && stderr.trim() === ''
+        ? null
+        : '요약 출력 또는 stderr가 예상과 다릅니다.';
+    },
+  },
+  {
     name: 'amount 컬럼 누락 오류',
     displayCommand: `node app.js ${FIXTURES.missingAmountColumn.path}`,
     fixture: FIXTURES.missingAmountColumn.path,
@@ -80,7 +99,7 @@ const checks = [
     command: nodeCommand,
     args: ['app.js', '--help'],
     expectedStatus: 0,
-    validate: ({ stdout }) => stdout.includes('사용법: node app.js [CSV 파일] [--json]')
+    validate: ({ stdout }) => stdout.includes('사용법: node app.js [CSV 파일] [--json | --summary]')
       ? null
       : '도움말 사용법을 찾을 수 없습니다.',
   },

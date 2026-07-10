@@ -7,6 +7,7 @@ const {
   summarizeAmounts,
   formatResult,
   formatJsonResult,
+  formatSummaryResult,
   sumAmount,
   runCli,
   executeCli,
@@ -78,16 +79,24 @@ assert.strictEqual(
   formatJsonResult({ total: 10, errorCount: 0 }, []),
   '{\n  "total": 10,\n  "errorCount": 0\n}',
 );
+assert.strictEqual(
+  formatSummaryResult({ total: 30.5, errorCount: 2 }, ['경고 1', '경고 2']),
+  'CSV 처리 요약\n- 합계: 30.5\n- 오류 행 수: 2\n- 경고 수: 2',
+);
 assert.deepStrictEqual(parseCliArgs(['input.csv', '--json']), {
-  filePath: 'input.csv', json: true, help: false,
+  filePath: 'input.csv', json: true, summary: false, help: false,
 });
 assert.deepStrictEqual(parseCliArgs(['--json', 'input.csv']), {
-  filePath: 'input.csv', json: true, help: false,
+  filePath: 'input.csv', json: true, summary: false, help: false,
+});
+assert.deepStrictEqual(parseCliArgs(['input.csv', '--summary']), {
+  filePath: 'input.csv', json: false, summary: true, help: false,
 });
 assert.deepStrictEqual(parseCliArgs([]), {
-  filePath: 'input.csv', json: false, help: false,
+  filePath: 'input.csv', json: false, summary: false, help: false,
 });
 assert.throws(() => parseCliArgs(['first.csv', 'second.csv']), /하나만 지정/);
+assert.throws(() => parseCliArgs(['--json', '--summary']), /함께 사용할 수 없습니다/);
 assert.throws(() => sumAmount('  \n\r\n'), /CSV 파일이 비어 있습니다/);
 
 const helpCapture = captureOutput();
@@ -125,6 +134,14 @@ assert.deepStrictEqual(JSON.parse(jsonCapture.messages.logs[0]), {
     '경고: 4행의 amount 값이 올바른 숫자가 아닙니다: (빈 값)',
   ],
 });
+
+const summaryCapture = captureOutput();
+runCli(invalidAmountFixturePath, summaryCapture.output, { summary: true });
+assert.deepStrictEqual(summaryCapture.messages.logs, [
+  `CSV 처리 요약\n- 합계: ${FIXTURES.invalidAmount.total}\n- 오류 행 수: ${FIXTURES.invalidAmount.errorCount}\n- 경고 수: ${FIXTURES.invalidAmount.warningCount}`,
+]);
+assert.deepStrictEqual(summaryCapture.messages.warnings, []);
+assert.deepStrictEqual(summaryCapture.messages.errors, []);
 
 const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'csv-amount-test-'));
 try {

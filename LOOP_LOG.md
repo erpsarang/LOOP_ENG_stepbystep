@@ -153,3 +153,15 @@
 - 스냅샷 범위: `.gitignore`, LOOP 문서, HANDOFF, fixtures와 전체 CLI 프로젝트 파일.
 - 커밋 메시지: `chore: release csv amount cli loop lab baseline`.
 - 커밋 결과: 첫 기준점 커밋 생성 성공. 이 결과를 로그에 포함하기 위해 동일 메시지로 amend하여 단일 커밋으로 유지.
+
+## 16번째 LOOP — summary 출력 옵션
+
+- 브랜치 확인: `experiment/summary-option`, 시작 시 작업 트리 clean. `master`에서 직접 작업하지 않음.
+- CLI 변경: `--summary` 옵션과 `formatSummaryResult` 추가. 합계, 오류 행 수, 경고 수를 사람이 읽는 형식으로 출력.
+- 출력 분리: summary 모드에서는 개별 경고를 stderr에 섞지 않고 경고 수로 집계.
+- 인자 검증: `--json`과 `--summary` 동시 사용을 오류로 처리.
+- 테스트: summary 포맷, 인자 파싱, 옵션 충돌, fixture 출력과 경고 비혼합을 검증.
+- 품질 게이트: `fixtures/invalid-amount.csv --summary` 실제 CLI 검증 추가.
+- 문서: README와 HANDOFF에 summary 사용법 및 품질 게이트 범위를 반영.
+- `npm run verify`: 성공, 종료 코드 0, 7개 검증 모두 PASS.
+- 재시도: 0회.
