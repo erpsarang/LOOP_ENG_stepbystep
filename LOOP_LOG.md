@@ -174,3 +174,16 @@
 - 기능 커밋: `dc9f671 feat: add summary output option` 생성 성공.
 - 문서 기록: 이번 실행 결과와 완료 TODO를 별도 문서 커밋으로 기록.
 - 재시도: 0회.
+
+## 19번째 LOOP — 실험 브랜치 병합 판단
+
+- 현재 브랜치: `experiment/summary-option`, 시작 시 작업 트리 clean.
+- 커밋 그래프: 실험 브랜치는 master 기준점 `3b9332a` 위에 기능 커밋 `dc9f671`과 문서 커밋 `a3a3935`가 직선으로 이어짐.
+- master 대비 범위: 7개 파일, summary 포맷·인자 처리·테스트·품질 게이트·사용 문서와 LOOP 기록에 한정.
+- 기존 동작: 일반 출력과 JSON 분기는 유지되고 도움말만 새 옵션을 반영. 기존 품질 게이트 항목 모두 PASS.
+- 테스트 충분성: 포맷, summary 인자, JSON 충돌, fixture 결과, 경고 비혼합과 실제 CLI 출력을 검증.
+- 문서 일관성: README, HANDOFF, LOOP_PLAN, LOOP_LOG가 구현과 품질 게이트 7개 항목을 일관되게 설명.
+- 범위 평가: 하나의 출력 옵션과 직접 관련된 테스트·문서만 추가되어 과도한 기능 확장 없음.
+- `npm run verify`: 성공, 종료 코드 0, 7개 검증 모두 PASS.
+- 병합 판단: **merge recommended**.
+- 병합 실행: 하지 않음. master 브랜치는 수정하지 않음.
