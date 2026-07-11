@@ -650,3 +650,16 @@
 - 원격 검증: 이번 LOOP에서는 수행하지 않음. master 병합과 원격 push도 수행하지 않음.
 - 추가 확인: `git branch -D`와 force push는 사용하지 않았고, 소스 코드와 workflow는 변경하지 않았다.
 - 결론: 로컬 v24.18.0에서도 Runner가 시작 가능한 사전 점검으로 조정됐고, 비허용 버전은 계속해서 명확히 중단되는 정책을 확보했다.
+
+## 45번째 LOOP — Autonomous Runner Node 정책 문서 정합성
+
+- 목적: Runner의 실제 Node.js 사전 점검 정책과 `AGENTS.md`의 자율 실행 정책을 일치시킨다.
+- 시작 안전 점검: 현재 브랜치 `autonomy/loop-runner-v1`, 작업 트리 clean, 현재 Node.js `v24.18.0`을 확인했다.
+- 발견한 정책 충돌: `scripts/run-autonomous-loop.ps1`은 LOOP 44부터 정확한 semver 형식의 Node.js 22.x 또는 24.x를 허용하지만 `AGENTS.md`는 `v22.17.0`만 허용한다고 규정했다.
+- 정책 조사: `RUNNER_CHECKLIST.md`에는 특정 Node 버전 제한이 없었다. LOOP 43의 `v22.17.0` 문구와 GitHub Actions의 22.17.0 고정은 당시 정책과 별도 CI 정책의 기록이므로 변경하지 않았다.
+- 실제 변경 파일: `AGENTS.md`, `LOOP_PLAN.md`, `LOOP_LOG.md`.
+- 실제 변경: `AGENTS.md`의 오래된 단일 버전 규칙을 Node.js 22.x 또는 24.x LTS 허용으로 최소 수정했다. Runner 동작 자체는 변경하지 않았다.
+- 검증 결과: Node.js v24.18.0에서 `npm run verify` 9개 모두 PASS.
+- smoke test 결과: `ProgressThenNoProgress`는 `no_progress_limit`, `ConsecutiveFailures`는 `consecutive_failure_limit`으로 정상 종료해 모두 PASS.
+- 범위 준수: 새 기능, GoalPath 문제, 소스 코드, Runner 스크립트, workflow는 변경하지 않았고 master 전환·병합과 push도 수행하지 않았다.
+- 결론: 자율 실행 지침과 Runner preflight가 Node.js 22.x 또는 24.x LTS라는 동일한 정책을 설명한다.

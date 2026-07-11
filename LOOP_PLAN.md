@@ -250,3 +250,14 @@
 - [x] TODO 124: Node preflight를 22.x 또는 24.x LTS 허용으로 조정하고, GitHub Actions의 22.17.0 고정은 유지한다.
 - [x] TODO 125: `npm run verify`와 두 Runner smoke test를 다시 실행해 수정이 회귀를 만들지 확인한다.
 - [x] TODO 126: LOOP 44 결과와 새 Node 정책을 LOOP 문서에 기록하고, master 병합·원격 push 없이 마무리한다.
+
+## 45번째 LOOP — Autonomous Runner Node 정책 문서 정합성
+
+- 목표: Runner가 허용하는 Node.js 22.x 또는 24.x LTS 정책과 `AGENTS.md`의 자율 실행 규칙을 일치시킨다.
+- 발견한 충돌: Runner는 LOOP 44부터 Node.js 22.x 또는 24.x를 허용하지만 `AGENTS.md`는 정확히 `v22.17.0`만 허용해 현재 로컬 Node.js v24.18.0과 모순됐다.
+- 실행 범위: `AGENTS.md`와 LOOP 문서만 최소 수정하며 Runner 동작, GitHub Actions의 22.17.0 고정, 과거 LOOP 기록은 변경하지 않는다.
+- 품질 게이트: `npm run verify` 9개 PASS와 `ProgressThenNoProgress`, `ConsecutiveFailures` Runner smoke test PASS.
+- [x] TODO 127: 지정 문서와 Runner 구현을 확인해 현재 정책과 오래된 제한의 범위를 판별한다.
+- [x] TODO 128: `AGENTS.md`의 Node 규칙을 Node.js 22.x 또는 24.x LTS 허용으로 최소 수정한다.
+- [x] TODO 129: `npm run verify`와 두 Runner smoke test를 실행해 회귀가 없음을 확인한다.
+- [x] TODO 130: 실제 변경 파일과 검증 결과를 LOOP 문서에 기록하고 관련 파일만 로컬 커밋한다.
