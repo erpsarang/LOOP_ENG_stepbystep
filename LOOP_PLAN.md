@@ -142,3 +142,10 @@
 - [x] TODO 72: master 대비 7개 파일과 4개 커밋의 변경 범위를 검토한다.
 - [x] TODO 73: 기본·summary·JSON·CSV 및 두 CSV 조합을 직접 실행해 출력 우선순위와 회귀를 확인한다.
 - [x] TODO 74: 최종 수용 기준과 문서 반영을 감사하고 master 병합 검토 가능 여부를 기록한다.
+
+## 33번째 LOOP — master 병합 전 최종 판단
+
+- [x] TODO 75: origin fetch 후 실험 브랜치·upstream과 master·origin/master 동기화를 확인한다.
+- [x] TODO 76: 9개 품질 게이트와 여섯 핵심 CLI 조합을 검증한다.
+- [x] TODO 77: master 대비 7개 파일·5개 커밋 범위와 merge-base를 점검한다.
+- [x] TODO 78: CSV 수용 기준과 병합 가능 판단을 기록하고 아직 병합하지 않는다.
