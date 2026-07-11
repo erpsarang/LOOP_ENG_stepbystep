@@ -284,3 +284,17 @@
 - 해시 비교: 세 해시가 모두 일치함.
 - force push: 사용하지 않음. LOOP 26 문서 커밋은 일반 `git push`로만 반영함.
 - 결론: 감사 시점의 로컬 `master`, 로컬 추적 ref와 GitHub 원격 `master`가 정상 동기화됨.
+
+## 27번째 LOOP — 최근 커밋 요약 및 프로젝트 체크포인트 문서화
+
+- 목적: 최근 커밋 요약 및 프로젝트 체크포인트 문서화.
+- 현재 브랜치: `master`.
+- 작업 트리 상태: 문서 수정 전 clean, `master...origin/master` 동기화 상태.
+- `npm run verify`: 성공, 종료 코드 0, 7개 검증 모두 PASS.
+- upstream 상태: 로컬 `master`가 `origin/master`를 추적하며, 감사 시작 시 둘 다 `a7a1129`를 가리킴.
+- 최근 커밋 요약: `3b9332a`에서 기본 CSV amount CLI 프로젝트와 검증 체계의 기준점을 만들고, `dc9f671`에서 실험 브랜치의 `--summary` 기능을 구현했으며, `34dc644`에서 no-ff 병합함. 이후 병합 결과 기록, 브랜치 정리 판단과 안전 삭제, GitHub remote 설정, 최초 push, 원격 동기화 감사를 문서 커밋으로 순차 보존함.
+- 기록 방식: `LOOP_PLAN.md`의 완료 TODO와 `LOOP_LOG.md`의 실행 근거를 함께 갱신하는 LOOP 기록 방식을 확립함.
+- 현재 완료된 실습 범위: 기본 프로젝트 생성 및 자동 검증 체계 구축, 실험 브랜치 기능 개발, master no-ff 병합, 병합 후 검증 통과, 병합 브랜치 안전 삭제, GitHub remote 설정, 최초 push, 로컬·추적 ref·원격 master 동기화 감사까지 완료함.
+- 다음 후보 작업: 대용량 CSV 스트리밍 처리, 금액 숫자 정밀도 개선, CSV 형식 범용성 확대, 타 운영체제 검증 자동화를 후속 LOOP 후보로 유지함.
+- force push: 사용하지 않음. LOOP 27 문서 커밋은 일반 `git push`로만 반영함.
+- 결론: 검증된 기능과 전체 Git 이력이 GitHub에 반영된 안정 체크포인트 상태임.
