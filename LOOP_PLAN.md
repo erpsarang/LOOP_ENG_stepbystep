@@ -156,3 +156,10 @@
 - [x] TODO 80: `experiment/csv-output`을 `--no-ff` merge commit으로 충돌 없이 병합한다.
 - [x] TODO 81: 병합 후 9개 품질 게이트와 CSV 단독·두 조합을 검증한다.
 - [x] TODO 82: 병합 결과를 문서 커밋으로 기록하고 master push는 LOOP 35까지 보류한다.
+
+## 35번째 LOOP — 병합 후 품질 게이트 및 master push
+
+- [x] TODO 83: clean master에서 병합 결과의 9개 품질 게이트를 최종 검증한다.
+- [x] TODO 84: `origin/master..master`의 예상 8개 커밋을 검토하고 일반 push한다.
+- [x] TODO 85: push 후 HEAD, `origin/master`, 원격 master 해시 일치를 확인한다.
+- [x] TODO 86: push 결과를 문서 커밋으로 기록하고 일반 push로 최종 반영한다.

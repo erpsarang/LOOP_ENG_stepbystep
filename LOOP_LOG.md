@@ -450,3 +450,14 @@
 - 직접 실행: `fixtures/valid.csv`의 `--csv`, `--summary --csv`, `--json --csv`가 모두 종료 코드 0이며 헤더와 `1500.5,0,0`을 출력함.
 - master push: 아직 수행하지 않음. LOOP 35 최종 품질 게이트 이후 일반 push 예정.
 - force push: 사용하지 않음.
+
+## 35번째 LOOP — 병합 후 품질 게이트 및 master push
+
+- 목적: 병합 후 품질 게이트 및 master push.
+- 현재 브랜치: `master`, 시작 작업 트리 clean.
+- `npm run verify`: 성공, 종료 코드 0, 9개 검증 모두 PASS.
+- push 전 `origin/master..master`: `9dd4133`, `ca0ab9c`, `0a2a42e`, `2ecf17f`, `dade61e`, `c924fca`, merge commit `67abe98`, LOOP 34 문서 커밋 `8c5490a`의 예상 8개 커밋.
+- 일반 push: `git push` 성공, `master`가 `6c17e3b`에서 `8c5490a`로 origin에 반영됨.
+- push 후 해시: HEAD, `origin/master`, 원격 `refs/heads/master`가 모두 `8c5490a75a7b5d4d236b859e92b40b1675d4d0cb`로 일치함.
+- force push: 사용하지 않음.
+- 결론: CSV 기능과 병합 결과가 GitHub master에 반영됨.
