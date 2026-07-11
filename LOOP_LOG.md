@@ -493,3 +493,22 @@
 - 강제 삭제: `git branch -D`를 사용하지 않음.
 - force push: `--force`, `-f`, `--force-with-lease`를 사용하지 않음.
 - 최종 결론: CSV 기능과 이력은 master에 보존된 상태에서 로컬·원격 실험 브랜치를 안전하게 정리 완료함.
+
+## 38번째 LOOP — 전체 실습 회고 및 LOOP 엔지니어링 패턴 문서화
+
+- 목적: 전체 실습 회고 및 LOOP 엔지니어링 패턴 문서화.
+- 현재 브랜치: `master`.
+- 작업 트리 상태: 문서 수정 전 clean.
+- `npm run verify`: 성공, 종료 코드 0, 9개 검증 모두 PASS.
+- 원격 동기화: 문서 수정 전 HEAD, `origin/master`, 원격 master가 모두 `64c4409e56ba54b450237aaa156ae11b6e6b8602`로 일치함.
+- 브랜치 상태: 로컬과 원격 모두 `master`만 존재함.
+- 검토 범위: `3b9332a` 기준점부터 `64c4409` LOOP 37 정리 기록까지 최근 25개 전체 커밋과 `LOOP_PLAN.md`, `LOOP_LOG.md`의 전체 흐름.
+- 새 문서: `LOOP_ENGINEERING_PATTERN.md` 작성.
+- 핵심 패턴: 작은 목표, clean·verify 선행, 제한된 변경, 직접 실행, diff 감사, 목적별 커밋, 일반 push, 세 해시 동기화, 명시적 중단과 다음 판단의 반복 구조를 정리함.
+- 운영 경계: supervised LOOP와 autonomous LOOP의 차이, 자율 진행 가능 작업과 사람 승인 필요 작업, 판단 자율성과 명령 실행 권한 승인의 분리를 문서화함.
+- Git 전략: 안정 master, `experiment/*`, `--no-ff` 병합, 병합 전후 검증, `git branch -d` 안전 정리와 강제 명령 금지를 정리함.
+- 재사용 자산: 목표, 상태, 허용 범위, 절차, 중단 조건, 검증, 커밋, push와 최종 보고를 포함한 표준 자율 LOOP 프롬프트 골격을 제공함.
+- 소스 코드: 수정하지 않음.
+- 강제 삭제: `git branch -D`를 사용하지 않음.
+- force push: `--force`, `-f`, `--force-with-lease`를 사용하지 않음.
+- 결론: 다음 실험부터 재사용 가능한 자율 LOOP 엔지니어링 패턴을 확보함.
