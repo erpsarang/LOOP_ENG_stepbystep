@@ -72,3 +72,9 @@
 - [x] TODO 35: 현재 브랜치, 작업 트리와 master 병합 브랜치 목록을 확인한다.
 - [x] TODO 36: 커밋 그래프와 품질 게이트로 `experiment/summary-option`의 병합 완료 상태를 검증한다.
 - [x] TODO 37: 브랜치 정리 판단과 실제 삭제 전 사용자 확인 필요 여부를 기록한다.
+
+## 22번째 LOOP — 병합 완료된 로컬 브랜치 안전 삭제
+
+- [x] TODO 38: `master`와 clean 작업 트리를 확인하고 `npm run verify`를 실행한다.
+- [x] TODO 39: `experiment/summary-option`의 master 병합 상태를 확인하고 `git branch -d experiment/summary-option`으로 안전하게 삭제한다.
+- [x] TODO 40: 로컬 브랜치 부재와 GitHub 미푸시 상태를 확인하고 결과를 기록한다.

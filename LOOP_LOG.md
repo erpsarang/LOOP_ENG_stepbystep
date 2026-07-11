@@ -211,3 +211,14 @@
 - 브랜치 정리 판단: **delete recommended**.
 - 판단 근거: 변경사항은 master에 병합 완료되었고 Git 로그에 이력이 보존되어 브랜치 자체를 학습 기록으로 유지할 추가 가치가 크지 않음.
 - 삭제 실행: 하지 않음. 실제 삭제 전 사용자 확인이 필요함.
+
+## 22번째 LOOP — 병합 완료된 로컬 브랜치 안전 삭제
+
+- 목적: master에 병합 완료된 로컬 `experiment/summary-option` 브랜치를 안전하게 삭제함.
+- 사전 상태: 현재 경로 `C:\Users\sangyeul\CODEX\codex-loop-lab`, 현재 브랜치 `master`, 작업 트리 clean.
+- master 검증: `npm run verify` 성공, 종료 코드 0, 7개 검증 모두 PASS.
+- 병합 확인: `git branch --merged master` 결과에 `experiment/summary-option`이 포함됨.
+- 삭제 명령: `git branch -d experiment/summary-option`.
+- 삭제 결과: 성공. 브랜치의 마지막 커밋은 `7865434`였으며, 로컬 브랜치 목록에서 더 이상 존재하지 않음을 확인함.
+- 강제 삭제: `git branch -D`는 사용하지 않음.
+- GitHub push: 수행하지 않음. 이번 LOOP는 로컬 Git 정리와 문서 기록에 한정함.
