@@ -96,9 +96,98 @@ function Get-GitOutput {
   return ($output -join "`n").Trim()
 }
 
+function Get-WorkingTreeFingerprint {
+  $parts = [System.Collections.Generic.List[string]]::new()
+  $parts.Add((Get-GitOutput -Arguments @('diff', '--binary')))
+  $parts.Add((Get-GitOutput -Arguments @('diff', '--cached', '--binary')))
+  $untracked = @(& git ls-files --others --exclude-standard)
+  if ($LASTEXITCODE -ne 0) { throw 'Could not fingerprint untracked files.' }
+  foreach ($path in ($untracked | Sort-Object)) {
+    $parts.Add("$path`t$((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash)")
+  }
+  $bytes = [System.Text.Encoding]::UTF8.GetBytes(($parts -join "`n"))
+  return [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData($bytes))
+}
+
 function Test-TimeLimit {
   param([datetime]$StartedAt, [int]$Minutes)
   return ((Get-Date) - $StartedAt).TotalMinutes -ge $Minutes
+}
+
+function Restore-IterationCheckpoint {
+  param(
+    [Parameter(Mandatory)] [string]$Checkpoint,
+    [Parameter(Mandatory)] [string]$RepositoryRoot,
+    [Parameter(Mandatory)] [string]$LogPath
+  )
+
+  $messages = [System.Collections.Generic.List[string]]::new()
+  try {
+    $currentHead = Get-GitOutput -Arguments @('rev-parse', 'HEAD')
+    if ($currentHead -ne $Checkpoint) {
+      & git merge-base --is-ancestor $Checkpoint $currentHead
+      if ($LASTEXITCODE -ne 0) { throw 'Current HEAD is not a descendant of the iteration checkpoint.' }
+      & git reset --mixed $Checkpoint 2>&1 | ForEach-Object { $messages.Add([string]$_) }
+      if ($LASTEXITCODE -ne 0) { throw "git reset --mixed failed with exit code $LASTEXITCODE" }
+      $messages.Add("Moved HEAD from $currentHead back to checkpoint $Checkpoint")
+    }
+    & git restore --source=$Checkpoint --staged --worktree -- . 2>&1 | ForEach-Object { $messages.Add([string]$_) }
+    if ($LASTEXITCODE -ne 0) { throw "git restore failed with exit code $LASTEXITCODE" }
+
+    $untracked = @(& git ls-files --others --exclude-standard)
+    if ($LASTEXITCODE -ne 0) { throw 'Could not enumerate untracked files during recovery.' }
+    $rootPrefix = $RepositoryRoot.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
+    foreach ($relativePath in $untracked) {
+      if (-not $relativePath) { continue }
+      $candidate = [System.IO.Path]::GetFullPath((Join-Path $RepositoryRoot $relativePath))
+      if (-not $candidate.StartsWith($rootPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Recovery refused a path outside the repository: $relativePath"
+      }
+      Remove-Item -LiteralPath $candidate -Force
+      $messages.Add("Removed untracked file: $relativePath")
+    }
+
+    $remaining = Get-GitOutput -Arguments @('status', '--porcelain')
+    if ($remaining -ne '') { throw "Recovery left a dirty working tree: $remaining" }
+    if ((Get-GitOutput -Arguments @('rev-parse', 'HEAD')) -ne $Checkpoint) {
+      throw 'Recovery did not restore HEAD to the iteration checkpoint.'
+    }
+    $messages.Add("Restored iteration checkpoint: $Checkpoint")
+    $messages | Set-Content -LiteralPath $LogPath -Encoding utf8
+    return $true
+  } catch {
+    $messages.Add("Recovery failed: $($_.Exception.Message)")
+    $messages | Set-Content -LiteralPath $LogPath -Encoding utf8
+    return $false
+  }
+}
+
+function Get-ReviewDecision {
+  param(
+    [Parameter(Mandatory)] [string]$ReviewLog,
+    [Parameter(Mandatory)] [string]$DecisionPath,
+    [Parameter(Mandatory)] [string]$DecisionLog,
+    [Parameter(Mandatory)] [string]$RepositoryRoot
+  )
+
+  $prompt = @"
+Read AGENTS.md and the independent codex review at: $ReviewLog
+Do not edit files. Classify the review outcome only. End with exactly REVIEW_PASS when it contains no
+actionable issue, or REVIEW_CHANGES_REQUESTED when it requests any correction.
+"@
+  $beforeFingerprint = Get-WorkingTreeFingerprint
+  Invoke-NativeLogged -Command 'codex' -Arguments @(
+    'exec', '--sandbox', 'workspace-write', '-c', 'approval_policy="never"', '--cd', $RepositoryRoot,
+    '--output-last-message', $DecisionPath, $prompt
+  ) -LogPath $DecisionLog | Out-Null
+  if ((Get-WorkingTreeFingerprint) -ne $beforeFingerprint) {
+    throw 'Review classifier modified repository files.'
+  }
+  $decision = Get-Content -LiteralPath $DecisionPath -Raw
+  $finalMarker = (($decision -split '\r?\n' | Where-Object { $_.Trim() } | Select-Object -Last 1) -join '').Trim()
+  if ($finalMarker -eq 'REVIEW_CHANGES_REQUESTED') { return 'changes-requested' }
+  if ($finalMarker -eq 'REVIEW_PASS') { return 'pass' }
+  throw 'Review classifier did not return a recognized marker.'
 }
 
 function Write-FinalReport {
@@ -112,6 +201,8 @@ function Write-FinalReport {
     [int]$SuccessfulCommits,
     [int]$Failures,
     [int]$NoProgress,
+    [string]$StartCheckpoint,
+    [string[]]$SkippedTasks,
     [object[]]$Records,
     [bool]$Smoke
   )
@@ -129,6 +220,8 @@ function Write-FinalReport {
     successfulCommits = $SuccessfulCommits
     failures = $Failures
     consecutiveNoProgress = $NoProgress
+    startCheckpoint = $StartCheckpoint
+    skippedTasks = $SkippedTasks
     records = $Records
   }
   $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $RunDirectory 'final-report.json') -Encoding utf8
@@ -144,9 +237,22 @@ function Write-FinalReport {
     "- Successful commits: $SuccessfulCommits",
     "- Failures: $Failures",
     "- Consecutive no-progress iterations: $NoProgress",
+    "- Start checkpoint: $StartCheckpoint",
+    "- Skipped tasks: $($SkippedTasks.Count)",
     "- Started: $($StartedAt.ToString('o'))",
     "- Finished: $($finishedAt.ToString('o'))"
   )
+  $failedRecords = @($Records | Where-Object { $_.PSObject.Properties['error'] -and $_.error })
+  if ($failedRecords.Count -gt 0) {
+    $lines += @('', '## Failures and recovery')
+    foreach ($record in $failedRecords) {
+      $lines += "- Iteration $($record.iteration): $($record.error) | recovered=$($record.recovered) | skipped=$($record.skippedTask)"
+    }
+  }
+  if ($SkippedTasks.Count -gt 0) {
+    $lines += @('', '## Skipped tasks')
+    $lines += @($SkippedTasks | ForEach-Object { "- $_" })
+  }
   $lines | Set-Content -LiteralPath (Join-Path $RunDirectory 'final-report.md') -Encoding utf8
 }
 
@@ -168,7 +274,7 @@ function Invoke-SmokeRun {
   $outcomes = if ($Scenario -eq 'ProgressThenNoProgress') {
     @('progress', 'no-progress', 'no-progress', 'progress')
   } else {
-    @('failure', 'failure', 'progress')
+    @('recovered-failure', 'progress', 'recovery-failure', 'recovery-failure')
   }
 
   for ($index = 0; $index -lt $outcomes.Count; $index += 1) {
@@ -178,14 +284,24 @@ function Invoke-SmokeRun {
       $successes += 1
       $failures = 0
       $noProgress = 0
-    } elseif ($outcome -eq 'failure') {
+    } elseif ($outcome -eq 'recovery-failure') {
       $failures += 1
+      $noProgress = 0
+    } elseif ($outcome -eq 'recovered-failure') {
+      $failures = 0
       $noProgress = 0
     } else {
       $noProgress += 1
       $failures = 0
     }
-    $record = [ordered]@{ iteration = $iteration; outcome = $outcome; at = (Get-Date).ToString('o') }
+    $record = [ordered]@{
+      iteration = $iteration
+      outcome = $outcome
+      at = (Get-Date).ToString('o')
+      error = if ($outcome -like '*failure') { "simulated $outcome" } else { $null }
+      recovered = if ($outcome -eq 'recovered-failure') { $true } elseif ($outcome -eq 'recovery-failure') { $false } else { $null }
+      skippedTask = if ($outcome -eq 'recovered-failure') { 'smoke-recovered-task' } else { $null }
+    }
     $records.Add($record)
     $record | ConvertTo-Json | Add-Content -LiteralPath (Join-Path $Directory 'run.jsonl') -Encoding utf8
 
@@ -197,7 +313,8 @@ function Invoke-SmokeRun {
   if ($reason -ne $expected) { throw "Smoke scenario $Scenario ended with $reason instead of $expected" }
   Write-FinalReport -RunDirectory $Directory -RunId $RunId -Branch 'autonomy/smoke' -Reason $reason `
     -StartedAt $startedAt -Iterations $records.Count -SuccessfulCommits $successes -Failures $failures `
-    -NoProgress $noProgress -Records $records.ToArray() -Smoke $true
+    -NoProgress $noProgress -StartCheckpoint 'smoke-checkpoint' -SkippedTasks @('smoke-recovered-task') `
+    -Records $records.ToArray() -Smoke $true
   Write-Host "Smoke scenario $Scenario passed with termination reason: $reason"
 }
 
@@ -245,8 +362,22 @@ $goalFullPath = Join-Path $repoRoot $GoalPath
 if (-not (Test-Path -LiteralPath $goalFullPath -PathType Leaf)) { throw "Goal file not found: $goalFullPath" }
 if (-not (Get-Command codex -ErrorAction SilentlyContinue)) { throw 'codex CLI is not available.' }
 if (-not $env:ComSpec -or -not (Test-Path -LiteralPath $env:ComSpec)) { throw 'Windows command processor is not available.' }
-
 $startedAt = Get-Date
+$startCheckpoint = Get-GitOutput -Arguments @('rev-parse', 'HEAD')
+$startCheckpoint | Set-Content -LiteralPath (Join-Path $runDirectory 'start-checkpoint.txt') -Encoding utf8
+$requiredNodeVersion = 'v22.17.0'
+$nodeCommand = Get-Command node -ErrorAction SilentlyContinue
+$actualNodeVersion = if ($nodeCommand) { ((& node --version 2>&1) -join '').Trim() } else { 'not found' }
+if (-not $nodeCommand -or $LASTEXITCODE -ne 0 -or $actualNodeVersion -ne $requiredNodeVersion) {
+  $nodeError = "Autonomous runner requires Node.js $requiredNodeVersion; current version is '$actualNodeVersion'."
+  $record = [ordered]@{ iteration = 0; error = $nodeError; recovered = $null; skippedTask = $null }
+  Write-FinalReport -RunDirectory $runDirectory -RunId $runId -Branch $branch -Reason 'node_version_mismatch' `
+    -StartedAt $startedAt -Iterations 0 -SuccessfulCommits 0 -Failures 1 -NoProgress 0 `
+    -StartCheckpoint $startCheckpoint -SkippedTasks @() -Records @($record) -Smoke $false
+  [Console]::Error.WriteLine($nodeError)
+  exit 3
+}
+
 $script:RunDeadline = $startedAt.AddMinutes($MaxMinutes)
 $records = [System.Collections.Generic.List[object]]::new()
 $consecutiveFailures = 0
@@ -255,6 +386,7 @@ $consecutiveNoProgress = 0
 $successfulCommits = 0
 $terminationReason = 'max_iterations'
 $completedIterations = 0
+$skippedTasks = [System.Collections.Generic.List[string]]::new()
 
 for ($iteration = 1; $iteration -le $MaxIterations; $iteration += 1) {
   if (Test-TimeLimit -StartedAt $startedAt -Minutes $MaxMinutes) { $terminationReason = 'time_limit'; break }
@@ -264,6 +396,10 @@ for ($iteration = 1; $iteration -le $MaxIterations; $iteration += 1) {
   $outcome = 'failure'
   $commit = $null
   $errorMessage = $null
+  $recovered = $null
+  $iterationCheckpoint = Get-GitOutput -Arguments @('rev-parse', 'HEAD')
+  $iterationCheckpoint | Set-Content -LiteralPath (Join-Path $iterationDirectory 'checkpoint.txt') -Encoding utf8
+  $taskSummary = $null
 
   try {
     if ((Get-GitOutput -Arguments @('status', '--porcelain')) -ne '') { throw 'Iteration started with a dirty working tree.' }
@@ -275,6 +411,8 @@ Read AGENTS.md and AUTONOMOUS_GOAL.md. Inspect the repository and identify exact
 testable quality improvement. Do not edit any repository file and do not commit. Explain the evidence,
 scope, intended test, implementation approach, risks, and stop conditions. If no safe improvement exists,
 end with NO_SAFE_IMPROVEMENT.
+The first nonempty line must be `TASK: <specific concise improvement>`.
+Do not repeat any previously failed task listed here: $($skippedTasks -join ' | ')
 "@
     $analysisMessage = Join-Path $iterationDirectory 'analysis.md'
     Invoke-NativeLogged -Command 'codex' -Arguments @(
@@ -282,7 +420,15 @@ end with NO_SAFE_IMPROVEMENT.
       '--output-last-message', $analysisMessage, $analysisPrompt
     ) -LogPath (Join-Path $iterationDirectory 'analysis.log') | Out-Null
     if ((Get-GitOutput -Arguments @('status', '--porcelain')) -ne '') { throw 'Analysis stage modified repository files.' }
-    if ((Get-Content -LiteralPath $analysisMessage -Raw) -match 'NO_SAFE_IMPROVEMENT') {
+    $analysisText = Get-Content -LiteralPath $analysisMessage -Raw
+    $taskLine = @($analysisText -split '\r?\n' | Where-Object { $_ -match '^TASK:\s*\S' } | Select-Object -First 1)
+    if ($taskLine.Count -gt 0) {
+      $taskSummary = ($taskLine[0] -replace '^TASK:\s*', '').Trim()
+    } else {
+      $taskSummary = (($analysisText -replace '\s+', ' ').Trim())
+      if ($taskSummary.Length -gt 500) { $taskSummary = $taskSummary.Substring(0, 500) }
+    }
+    if ($analysisText -match 'NO_SAFE_IMPROVEMENT') {
       $outcome = 'no-progress'
     } else {
       if (Test-TimeLimit -StartedAt $startedAt -Minutes $MaxMinutes) { throw 'Time limit reached before test stage.' }
@@ -320,8 +466,10 @@ control files, and do not commit.
         $reviewResult = Invoke-NativeLogged -Command 'codex' -Arguments @(
           'review', '-c', 'approval_policy="never"', '-c', 'sandbox_mode="workspace-write"', '--uncommitted'
         ) -LogPath (Join-Path $iterationDirectory 'review.log')
-        $reviewText = $reviewResult.Stdout
-        if ($reviewText -match 'REVIEW_CHANGES_REQUESTED') {
+        $reviewDecision = Get-ReviewDecision -ReviewLog (Join-Path $iterationDirectory 'review.log') `
+          -DecisionPath (Join-Path $iterationDirectory 'review-decision.md') `
+          -DecisionLog (Join-Path $iterationDirectory 'review-decision.log') -RepositoryRoot $repoRoot
+        if ($reviewDecision -eq 'changes-requested') {
           if (Test-TimeLimit -StartedAt $startedAt -Minutes $MaxMinutes) { throw 'Time limit reached before correction.' }
           $correctionPrompt = @"
 You are the correction stage of autonomous quality iteration $iteration.
@@ -338,9 +486,10 @@ Apply only the concrete review fixes. Do not broaden scope, weaken tests, edit r
           $finalReview = Invoke-NativeLogged -Command 'codex' -Arguments @(
             'review', '-c', 'approval_policy="never"', '-c', 'sandbox_mode="workspace-write"', '--uncommitted'
           ) -LogPath (Join-Path $iterationDirectory 'review-after-correction.log')
-          if ($finalReview.Stdout -notmatch 'REVIEW_PASS') { throw 'Independent review still requests changes after correction.' }
-        } elseif ($reviewText -notmatch 'REVIEW_PASS') {
-          throw 'Independent review did not return a recognized marker.'
+          $finalDecision = Get-ReviewDecision -ReviewLog (Join-Path $iterationDirectory 'review-after-correction.log') `
+            -DecisionPath (Join-Path $iterationDirectory 'review-after-correction-decision.md') `
+            -DecisionLog (Join-Path $iterationDirectory 'review-after-correction-decision.log') -RepositoryRoot $repoRoot
+          if ($finalDecision -ne 'pass') { throw 'Independent review still requests changes after correction.' }
         }
 
         Assert-AllowedChanges
@@ -364,10 +513,18 @@ Apply only the concrete review fixes. Do not broaden scope, weaken tests, edit r
   } catch {
     $errorMessage = $_.Exception.Message
     $errorMessage | Set-Content -LiteralPath (Join-Path $iterationDirectory 'error.txt') -Encoding utf8
-    $consecutiveFailures += 1
     $totalFailures += 1
     $consecutiveNoProgress = 0
-    $outcome = 'failure'
+    if ($taskSummary) { $skippedTasks.Add($taskSummary) }
+    $recovered = Restore-IterationCheckpoint -Checkpoint $iterationCheckpoint -RepositoryRoot $repoRoot `
+      -LogPath (Join-Path $iterationDirectory 'recovery.log')
+    if ($recovered) {
+      $consecutiveFailures = 0
+      $outcome = 'recovered-failure'
+    } else {
+      $consecutiveFailures += 1
+      $outcome = 'recovery-failure'
+    }
   }
 
   $completedIterations = $iteration
@@ -378,6 +535,9 @@ Apply only the concrete review fixes. Do not broaden scope, weaken tests, edit r
     outcome = $outcome
     commit = $commit
     error = $errorMessage
+    checkpoint = $iterationCheckpoint
+    recovered = $recovered
+    skippedTask = $taskSummary
     consecutiveFailures = $consecutiveFailures
     consecutiveNoProgress = $consecutiveNoProgress
   }
@@ -391,7 +551,8 @@ Apply only the concrete review fixes. Do not broaden scope, weaken tests, edit r
 
 Write-FinalReport -RunDirectory $runDirectory -RunId $runId -Branch $branch -Reason $terminationReason `
   -StartedAt $startedAt -Iterations $completedIterations -SuccessfulCommits $successfulCommits `
-  -Failures $totalFailures -NoProgress $consecutiveNoProgress -Records $records.ToArray() -Smoke $false
+  -Failures $totalFailures -NoProgress $consecutiveNoProgress -StartCheckpoint $startCheckpoint `
+  -SkippedTasks $skippedTasks.ToArray() -Records $records.ToArray() -Smoke $false
 
 Write-Host "Autonomous LOOP finished: $terminationReason"
 Write-Host "Report: $(Join-Path $runDirectory 'final-report.md')"

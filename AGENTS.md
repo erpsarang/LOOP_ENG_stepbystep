@@ -10,6 +10,7 @@ These rules apply to every Codex invocation in this repository, including invoca
 - Never use `git branch -D`, force push, rebase, amend, `git reset --hard`, `git clean -fd`, `--yolo`, or `--dangerously-bypass-approvals-and-sandbox`.
 - Do not install programs, add dependencies, access secrets, or broaden filesystem/network permissions.
 - Respect `workspace-write` and `approval_policy="never"`; do not request interactive approval.
+- Run autonomous quality iterations only with Node.js `v22.17.0`; stop with a report on any other version.
 - Stop and report when the work requires authority outside these rules.
 
 ## Iteration discipline
