@@ -548,14 +548,17 @@
 - 경로 조사: `path.resolve`, `__dirname`, `os.tmpdir()`과 Node 파일 API를 사용해 경로 구분자에 직접 의존하지 않음. fixture import의 파일명 대소문자도 실제 파일과 일치함.
 - 줄바꿈·인코딩 조사: 입력 파서는 CRLF와 LF, UTF-8 BOM을 테스트하고 출력 포맷은 명시적 `\n`을 사용함. `spawnSync` 결과 비교는 `trim()` 또는 명시적 문자열로 수행되어 runner 기본 줄바꿈의 영향이 제한됨.
 - 임시 파일 조사: `fs.mkdtempSync(path.join(os.tmpdir(), ...))`를 사용하고 `finally`에서 Node API로 정리해 OS별 임시 경로를 하드코딩하지 않음.
-- Node.js 조건: `package.json`의 최소 지원 버전 `>=14.14`를 따르고 세 OS에서 동일한 `14.14.0`을 사용함. 최신 버전만 확인하는 대신 선언된 최소 호환성을 직접 검증하기 위한 선택임.
+- Node.js 조건: `package.json`의 지원 범위 `>=14.14` 안에서 세 OS가 동일한 Node.js 버전을 사용함. 최초에는 최소 버전 `14.14.0`을 선택했으나 macOS arm64 배포물 부재가 확인되어 세 OS에서 제공되는 `22.17.0`으로 조정함.
 - workflow: `.github/workflows/cross-platform-verify.yml` 신규 작성.
 - matrix: `windows-latest`, `ubuntu-latest`, `macos-latest`, `fail-fast: false`.
 - 실행 조건: `experiment/cross-platform-verify` push와 해당 head 브랜치에서 `master`로 향하는 pull request.
-- 실행 단계: checkout, Node.js 14.14.0 설정, Node/npm 버전 출력, `npm run verify`.
+- 실행 단계: checkout, Node.js 22.17.0 설정, Node/npm 버전 출력, `npm run verify`.
 - 실제 변경 파일: workflow와 `LOOP_PLAN.md`, `LOOP_LOG.md`. 애플리케이션 소스·테스트·package 파일은 변경하지 않음.
 - workflow 작성 후 로컬 `npm run verify`: 성공, 종료 코드 0, 9개 검증 모두 PASS.
 - 원격 검증 절차: 실험 브랜치를 일반 push한 뒤 `gh` 설치·인증 상태를 확인하고, 사용 가능하면 workflow run의 세 matrix job이 완료될 때까지 확인함.
-- 아직 확인되지 않은 항목: GitHub-hosted 각 OS runner에서 Node.js 14.14.0 설치와 9개 품질 게이트의 실제 결과.
+- 최초 원격 run `29148829124`: Windows PASS, Ubuntu PASS, macOS FAIL. macOS는 `macos-latest` arm64에서 Node.js 14.14.0 배포물을 찾지 못해 setup 단계에서 실패함.
+- 원인과 최소 수정: 애플리케이션이나 테스트 실패가 아닌 runner 아키텍처의 구버전 Node 배포물 가용성 문제. workflow의 공통 Node 버전만 `22.17.0`으로 변경하며 소스·테스트·package 설정은 유지함.
+- 원격 수정 재시도: 1회차 예정(허용 최대 3회).
+- 아직 확인되지 않은 항목: 수정 push 후 GitHub-hosted Windows, Ubuntu, macOS의 9개 품질 게이트 결과.
 - master 병합·push, PR 병합, release/tag와 실험 브랜치 삭제는 수행하지 않음.
 - force push와 `git branch -D`는 사용하지 않음.
