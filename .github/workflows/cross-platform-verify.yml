@@ -1,0 +1,39 @@
+name: Cross-platform verify
+
+on:
+  push:
+    branches:
+      - experiment/cross-platform-verify
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  verify:
+    if: github.event_name == 'push' || github.head_ref == 'experiment/cross-platform-verify'
+    name: Verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-latest
+          - ubuntu-latest
+          - macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22.17.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.17.0
+
+      - name: Show runtime versions
+        run: |
+          node --version
+          npm --version
+
+      - name: Run quality gate
+        run: npm run verify
