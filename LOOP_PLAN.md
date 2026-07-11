@@ -128,3 +128,10 @@
 - [x] TODO 64: `--csv`, CSV 필드 이스케이프, 헤더와 단일 요약 행 출력을 구현한다.
 - [x] TODO 65: 기본·JSON·summary 회귀 테스트와 `--summary --csv` 조합 검증을 보강한다.
 - [x] TODO 66: README·HANDOFF·LOOP 문서를 갱신하고 구현 후 8개 품질 게이트를 통과한다.
+
+## 31-FIX LOOP — `--json --csv` 조합 오류 수정
+
+- [x] TODO 67: clean 실험 브랜치에서 `--json --csv` 종료 코드 1 충돌을 재현하고 원인을 확인한다.
+- [x] TODO 68: 인자 충돌 검사를 최소 수정해 `--csv`가 JSON과 함께 지정돼도 우선 출력되게 한다.
+- [x] TODO 69: JSON·summary 단독 회귀와 CSV 단독·두 조합의 테스트 및 품질 게이트를 보강한다.
+- [x] TODO 70: 사용 문서와 LOOP 결과를 갱신하고 9개 품질 게이트 및 직접 실행을 통과한다.

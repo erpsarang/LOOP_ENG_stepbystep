@@ -97,11 +97,12 @@ CSV 처리 요약
 
 ## CSV 요약 출력
 
-`--csv` 옵션은 합계, 오류 행 수와 경고 수를 헤더와 단일 데이터 행으로 출력합니다. `--summary`와 함께 지정해도 CSV 출력이 우선됩니다.
+`--csv` 옵션은 합계, 오류 행 수와 경고 수를 헤더와 단일 데이터 행으로 출력합니다. `--summary` 또는 `--json`과 함께 지정해도 CSV 출력이 우선됩니다.
 
 ```powershell
 node app.js fixtures/invalid-amount.csv --csv
 node app.js fixtures/invalid-amount.csv --summary --csv
+node app.js fixtures/invalid-amount.csv --json --csv
 ```
 
 ```csv
@@ -109,7 +110,7 @@ total,errorCount,warningCount
 30.5,2,2
 ```
 
-CSV 필드에 콤마, 큰따옴표 또는 줄바꿈이 포함되면 필드를 큰따옴표로 감싸고 내부 큰따옴표를 두 번 써서 안전하게 출력합니다. `--json`과 `--csv`는 함께 사용할 수 없습니다.
+CSV 필드에 콤마, 큰따옴표 또는 줄바꿈이 포함되면 필드를 큰따옴표로 감싸고 내부 큰따옴표를 두 번 써서 안전하게 출력합니다.
 
 지정한 파일이 없으면 친절한 오류를 출력하고 종료 코드 `1`로 끝납니다.
 
@@ -149,7 +150,7 @@ npm test
 npm run verify
 ```
 
-이 명령은 테스트, 일반 출력, JSON 파싱, summary 출력, CSV 출력과 summary 조합, 누락 파일, `amount` 컬럼 누락, 도움말을 검증합니다. 예상된 오류의 종료 코드 `1`도 정확히 판정합니다. 각 항목의 성공 또는 실패와 최종 집계를 출력하며 하나라도 실패하면 종료 코드 `1`로 끝납니다.
+이 명령은 테스트, 일반 출력, JSON 파싱, summary 출력, CSV 출력과 summary·JSON 조합, 누락 파일, `amount` 컬럼 누락, 도움말을 검증합니다. 예상된 오류의 종료 코드 `1`도 정확히 판정합니다. 각 항목의 성공 또는 실패와 최종 집계를 출력하며 하나라도 실패하면 종료 코드 `1`로 끝납니다.
 
 ## 예제와 테스트 데이터
 

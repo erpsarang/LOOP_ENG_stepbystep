@@ -175,10 +175,6 @@ function parseCliArgs(args) {
     throw new Error('--json과 --summary는 함께 사용할 수 없습니다.');
   }
 
-  if (args.includes('--json') && args.includes('--csv')) {
-    throw new Error('--json과 --csv는 함께 사용할 수 없습니다.');
-  }
-
   return {
     filePath: filePaths[0] || 'input.csv',
     json: args.includes('--json'),
@@ -195,7 +191,7 @@ function formatHelp() {
     '옵션:',
     '  --json      결과를 JSON으로 출력합니다.',
     '  --summary   결과를 사람이 읽기 좋은 요약으로 출력합니다.',
-    '  --csv       결과를 CSV 요약으로 출력합니다. --summary와 함께 사용할 수 있습니다.',
+    '  --csv       결과를 CSV 요약으로 출력합니다. 다른 출력 옵션보다 우선합니다.',
     '  -h, --help  도움말을 출력합니다.',
   ].join('\n');
 }

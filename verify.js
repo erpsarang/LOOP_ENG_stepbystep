@@ -100,6 +100,23 @@ const checks = [
     },
   },
   {
+    name: 'CSV CLI 출력과 JSON 조합',
+    displayCommand: `node app.js ${FIXTURES.invalidAmount.path} --json --csv`,
+    fixture: FIXTURES.invalidAmount.path,
+    command: nodeCommand,
+    args: ['app.js', FIXTURES.invalidAmount.path, '--json', '--csv'],
+    expectedStatus: FIXTURES.invalidAmount.expectedStatus,
+    validate: ({ stdout, stderr }) => {
+      const expected = [
+        'total,errorCount,warningCount',
+        `${FIXTURES.invalidAmount.total},${FIXTURES.invalidAmount.errorCount},${FIXTURES.invalidAmount.warningCount}`,
+      ].join('\n');
+      return stdout.trim() === expected && stderr.trim() === ''
+        ? null
+        : 'JSON 조합에서 CSV 우선 출력 또는 stderr가 예상과 다릅니다.';
+    },
+  },
+  {
     name: 'amount 컬럼 누락 오류',
     displayCommand: `node app.js ${FIXTURES.missingAmountColumn.path}`,
     fixture: FIXTURES.missingAmountColumn.path,

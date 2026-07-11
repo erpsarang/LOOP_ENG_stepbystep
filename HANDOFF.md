@@ -26,6 +26,7 @@ node app.js input.csv --json
 node app.js input.csv --summary
 node app.js input.csv --csv
 node app.js input.csv --summary --csv
+node app.js input.csv --json --csv
 node app.js --help
 ```
 
@@ -47,7 +48,7 @@ npm test
 npm run verify
 ```
 
-품질 게이트는 테스트, 정상 fixture 일반 출력, 잘못된 금액 fixture의 JSON·summary·CSV 출력, `--summary --csv` 조합, 누락 파일, `amount` 컬럼 누락, 도움말을 확인합니다. 모든 항목이 통과해야 종료 코드 `0`을 반환합니다. 누락 파일과 컬럼 누락의 코드 `1`은 예상 결과로 판정합니다.
+품질 게이트는 테스트, 정상 fixture 일반 출력, 잘못된 금액 fixture의 JSON·summary·CSV 출력, `--summary --csv`와 `--json --csv` 조합, 누락 파일, `amount` 컬럼 누락, 도움말을 확인합니다. 모든 항목이 통과해야 종료 코드 `0`을 반환합니다. 누락 파일과 컬럼 누락의 코드 `1`은 예상 결과로 판정합니다.
 
 ## fixture 데이터
 

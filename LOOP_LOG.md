@@ -368,3 +368,21 @@
 - 직접 실행: `node app.js --csv`와 `node app.js --summary --csv` 모두 헤더와 `18000,2,2` 데이터 행을 출력하고 종료 코드 0을 반환함.
 - 일반 push: 기능 커밋 후 `origin/experiment/csv-output`에 일반 `git push` 예정.
 - force push: 사용하지 않음.
+
+## 31-FIX LOOP — `--json --csv` 조합 오류 수정
+
+- 목적: `--json --csv` 조합 오류 수정.
+- 현재 브랜치: `experiment/csv-output`.
+- 시작 작업 트리 상태: clean, `origin/experiment/csv-output` 추적.
+- 발견된 문제: `node app.js input.csv --json --csv`가 `오류: --json과 --csv는 함께 사용할 수 없습니다.`를 출력하고 종료 코드 1을 반환함.
+- 원인: `parseCliArgs`에 JSON과 CSV의 동시 사용을 거부하는 전용 조건이 있었음. 실제 `runCli` 출력 분기는 이미 CSV를 JSON보다 먼저 평가하고 있었음.
+- 수정 방향: JSON+CSV 충돌 조건만 제거하고 기존 CSV 우선 출력 분기를 재사용해 `--csv` 지정 시 CSV가 우선되도록 함.
+- 변경한 주요 파일: `app.js`, `test.js`, `verify.js`, `README.md`, `HANDOFF.md`, `LOOP_PLAN.md`, `LOOP_LOG.md`.
+- 테스트 보강: `parseCliArgs`가 `--json --csv`를 허용하는지, `executeArgs`가 종료 코드 0과 정확한 CSV를 반환하는지 검증함. JSON·summary 단독과 CSV 단독·summary 조합의 기존 검증도 유지함.
+- 품질 게이트 보강: invalid-amount fixture의 `--json --csv` 실제 실행에서 헤더 `total,errorCount,warningCount`, 데이터 행 `30.5,2,2`, 빈 stderr와 종료 코드 0을 확인하는 항목을 추가함.
+- `npm run verify`: 성공, 종료 코드 0, 9개 검증 모두 PASS.
+- 직접 실행: 기본, `--summary`, `--json`, `--csv`, `--summary --csv`, `--json --csv`가 모두 종료 코드 0. 두 CSV 조합은 헤더와 `18000,2,2`를 출력함.
+- 수용 기준: CSV 단독, summary+CSV, JSON+CSV, CSV 헤더·단일 행, 기본·summary·JSON 회귀와 전체 품질 게이트를 모두 충족함.
+- master 병합: 아직 수행하지 않음.
+- force push: 사용하지 않음. 수정 커밋은 일반 `git push`로만 반영함.
+- 결론: 다음 LOOP에서 CSV 수용 기준을 재감사하거나 master 병합을 검토할 수 있음.

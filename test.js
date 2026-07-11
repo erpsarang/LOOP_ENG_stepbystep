@@ -105,12 +105,14 @@ assert.deepStrictEqual(parseCliArgs(['input.csv', '--summary']), {
 assert.deepStrictEqual(parseCliArgs(['input.csv', '--summary', '--csv']), {
   filePath: 'input.csv', json: false, summary: true, csv: true, help: false,
 });
+assert.deepStrictEqual(parseCliArgs(['input.csv', '--json', '--csv']), {
+  filePath: 'input.csv', json: true, summary: false, csv: true, help: false,
+});
 assert.deepStrictEqual(parseCliArgs([]), {
   filePath: 'input.csv', json: false, summary: false, csv: false, help: false,
 });
 assert.throws(() => parseCliArgs(['first.csv', 'second.csv']), /하나만 지정/);
 assert.throws(() => parseCliArgs(['--json', '--summary']), /함께 사용할 수 없습니다/);
-assert.throws(() => parseCliArgs(['--json', '--csv']), /함께 사용할 수 없습니다/);
 assert.throws(() => sumAmount('  \n\r\n'), /CSV 파일이 비어 있습니다/);
 
 const helpCapture = captureOutput();
@@ -164,6 +166,17 @@ assert.deepStrictEqual(csvCapture.messages.logs, [
 ]);
 assert.deepStrictEqual(csvCapture.messages.warnings, []);
 assert.deepStrictEqual(csvCapture.messages.errors, []);
+
+const jsonCsvCapture = captureOutput();
+assert.strictEqual(
+  executeArgs([invalidAmountFixturePath, '--json', '--csv'], jsonCsvCapture.output),
+  0,
+);
+assert.deepStrictEqual(jsonCsvCapture.messages.logs, [
+  `total,errorCount,warningCount\n${FIXTURES.invalidAmount.total},${FIXTURES.invalidAmount.errorCount},${FIXTURES.invalidAmount.warningCount}`,
+]);
+assert.deepStrictEqual(jsonCsvCapture.messages.warnings, []);
+assert.deepStrictEqual(jsonCsvCapture.messages.errors, []);
 
 const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'csv-amount-test-'));
 try {
