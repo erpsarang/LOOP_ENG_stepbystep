@@ -95,6 +95,23 @@ CSV 처리 요약
 
 `--json`과 `--summary`는 출력 형식 옵션이므로 함께 사용할 수 없습니다.
 
+## CSV 요약 출력
+
+`--csv` 옵션은 합계, 오류 행 수와 경고 수를 헤더와 단일 데이터 행으로 출력합니다. `--summary` 또는 `--json`과 함께 지정해도 CSV 출력이 우선됩니다.
+
+```powershell
+node app.js fixtures/invalid-amount.csv --csv
+node app.js fixtures/invalid-amount.csv --summary --csv
+node app.js fixtures/invalid-amount.csv --json --csv
+```
+
+```csv
+total,errorCount,warningCount
+30.5,2,2
+```
+
+CSV 필드에 콤마, 큰따옴표 또는 줄바꿈이 포함되면 필드를 큰따옴표로 감싸고 내부 큰따옴표를 두 번 써서 안전하게 출력합니다.
+
 지정한 파일이 없으면 친절한 오류를 출력하고 종료 코드 `1`로 끝납니다.
 
 ```text
@@ -120,7 +137,7 @@ npm test
 `node test.js`로도 같은 테스트를 실행할 수 있습니다. 테스트 범위에는 다음 항목이 포함됩니다.
 
 - 기본 파일과 별도 CSV 경로
-- 일반 출력과 JSON 출력
+- 일반 출력과 JSON·summary·CSV 출력
 - 존재하지 않는 파일과 `amount` 컬럼 누락
 - 공백, 소수, 음수, BOM, 빈 CSV와 빈 행
 - 도움말, 옵션 순서, 잘못된 옵션과 복수 파일 인자
@@ -133,7 +150,7 @@ npm test
 npm run verify
 ```
 
-이 명령은 테스트, 일반 출력, JSON 파싱, summary 출력, 누락 파일, `amount` 컬럼 누락, 도움말을 검증합니다. 예상된 오류의 종료 코드 `1`도 정확히 판정합니다. 각 항목의 성공 또는 실패와 최종 집계를 출력하며 하나라도 실패하면 종료 코드 `1`로 끝납니다.
+이 명령은 테스트, 일반 출력, JSON 파싱, summary 출력, CSV 출력과 summary·JSON 조합, 누락 파일, `amount` 컬럼 누락, 도움말을 검증합니다. 예상된 오류의 종료 코드 `1`도 정확히 판정합니다. 각 항목의 성공 또는 실패와 최종 집계를 출력하며 하나라도 실패하면 종료 코드 `1`로 끝납니다.
 
 ## 예제와 테스트 데이터
 
@@ -162,6 +179,7 @@ npm run verify
 - `summarizeAmounts(rows)`: 유효한 `amount`를 합산하고 오류 행 수를 집계합니다.
 - `formatResult(summary)`: 계산 결과를 CLI 출력 문자열로 만듭니다.
 - `formatJsonResult(summary, warnings)`: 계산 결과와 경고를 JSON 문자열로 만듭니다.
+- `formatCsvResult(summary, warnings)`: 계산 결과와 경고 수를 CSV 헤더와 단일 행으로 만듭니다.
 - `sumAmount(csvText)`: 위 파싱과 집계 함수를 조합해 기존 호출 방식을 유지합니다.
 - `executeArgs(args)`: CLI 인자를 검증하고 도움말 또는 파일 처리를 실행합니다.
 

@@ -100,6 +100,19 @@ function formatSummaryResult(summary, warnings) {
   ].join('\n');
 }
 
+function escapeCsvValue(value) {
+  const text = String(value);
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function formatCsvResult(summary, warnings) {
+  const headers = ['total', 'errorCount', 'warningCount'];
+  const values = [summary.total, summary.errorCount, warnings.length];
+  return [headers, values]
+    .map((row) => row.map(escapeCsvValue).join(','))
+    .join('\n');
+}
+
 function sumAmount(csvText, warn = () => {}) {
   return summarizeAmounts(parseCsv(csvText), warn);
 }
@@ -119,13 +132,15 @@ function runCli(filePath = 'input.csv', output = console, options = {}) {
 
   const warnings = [];
   const result = sumAmount(csvText, (message) => {
-    if (options.json || options.summary) {
+    if (options.json || options.summary || options.csv) {
       warnings.push(message);
     } else {
       output.warn(message);
     }
   });
-  if (options.json) {
+  if (options.csv) {
+    output.log(formatCsvResult(result, warnings));
+  } else if (options.json) {
     output.log(formatJsonResult(result, warnings));
   } else if (options.summary) {
     output.log(formatSummaryResult(result, warnings));
@@ -145,7 +160,7 @@ function executeCli(filePath, output = console, options = {}) {
 }
 
 function parseCliArgs(args) {
-  const knownOptions = ['--json', '--summary', '--help', '-h'];
+  const knownOptions = ['--json', '--summary', '--csv', '--help', '-h'];
   const unknownOption = args.find((arg) => arg.startsWith('-') && !knownOptions.includes(arg));
   if (unknownOption) {
     throw new Error(`알 수 없는 옵션입니다: ${unknownOption}`);
@@ -164,17 +179,19 @@ function parseCliArgs(args) {
     filePath: filePaths[0] || 'input.csv',
     json: args.includes('--json'),
     summary: args.includes('--summary'),
+    csv: args.includes('--csv'),
     help: args.includes('--help') || args.includes('-h'),
   };
 }
 
 function formatHelp() {
   return [
-    '사용법: node app.js [CSV 파일] [--json | --summary]',
+    '사용법: node app.js [CSV 파일] [--json | --summary | --csv]',
     '',
     '옵션:',
     '  --json      결과를 JSON으로 출력합니다.',
     '  --summary   결과를 사람이 읽기 좋은 요약으로 출력합니다.',
+    '  --csv       결과를 CSV 요약으로 출력합니다. 다른 출력 옵션보다 우선합니다.',
     '  -h, --help  도움말을 출력합니다.',
   ].join('\n');
 }
@@ -203,6 +220,8 @@ module.exports = {
   formatResult,
   formatJsonResult,
   formatSummaryResult,
+  escapeCsvValue,
+  formatCsvResult,
   sumAmount,
   runCli,
   executeCli,

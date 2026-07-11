@@ -8,6 +8,8 @@ const {
   formatResult,
   formatJsonResult,
   formatSummaryResult,
+  escapeCsvValue,
+  formatCsvResult,
   sumAmount,
   runCli,
   executeCli,
@@ -83,17 +85,31 @@ assert.strictEqual(
   formatSummaryResult({ total: 30.5, errorCount: 2 }, ['경고 1', '경고 2']),
   'CSV 처리 요약\n- 합계: 30.5\n- 오류 행 수: 2\n- 경고 수: 2',
 );
+assert.strictEqual(escapeCsvValue('plain'), 'plain');
+assert.strictEqual(escapeCsvValue('comma,value'), '"comma,value"');
+assert.strictEqual(escapeCsvValue('quote"value'), '"quote""value"');
+assert.strictEqual(escapeCsvValue('line\nbreak'), '"line\nbreak"');
+assert.strictEqual(
+  formatCsvResult({ total: 30.5, errorCount: 2 }, ['경고 1', '경고 2']),
+  'total,errorCount,warningCount\n30.5,2,2',
+);
 assert.deepStrictEqual(parseCliArgs(['input.csv', '--json']), {
-  filePath: 'input.csv', json: true, summary: false, help: false,
+  filePath: 'input.csv', json: true, summary: false, csv: false, help: false,
 });
 assert.deepStrictEqual(parseCliArgs(['--json', 'input.csv']), {
-  filePath: 'input.csv', json: true, summary: false, help: false,
+  filePath: 'input.csv', json: true, summary: false, csv: false, help: false,
 });
 assert.deepStrictEqual(parseCliArgs(['input.csv', '--summary']), {
-  filePath: 'input.csv', json: false, summary: true, help: false,
+  filePath: 'input.csv', json: false, summary: true, csv: false, help: false,
+});
+assert.deepStrictEqual(parseCliArgs(['input.csv', '--summary', '--csv']), {
+  filePath: 'input.csv', json: false, summary: true, csv: true, help: false,
+});
+assert.deepStrictEqual(parseCliArgs(['input.csv', '--json', '--csv']), {
+  filePath: 'input.csv', json: true, summary: false, csv: true, help: false,
 });
 assert.deepStrictEqual(parseCliArgs([]), {
-  filePath: 'input.csv', json: false, summary: false, help: false,
+  filePath: 'input.csv', json: false, summary: false, csv: false, help: false,
 });
 assert.throws(() => parseCliArgs(['first.csv', 'second.csv']), /하나만 지정/);
 assert.throws(() => parseCliArgs(['--json', '--summary']), /함께 사용할 수 없습니다/);
@@ -142,6 +158,25 @@ assert.deepStrictEqual(summaryCapture.messages.logs, [
 ]);
 assert.deepStrictEqual(summaryCapture.messages.warnings, []);
 assert.deepStrictEqual(summaryCapture.messages.errors, []);
+
+const csvCapture = captureOutput();
+runCli(invalidAmountFixturePath, csvCapture.output, { summary: true, csv: true });
+assert.deepStrictEqual(csvCapture.messages.logs, [
+  `total,errorCount,warningCount\n${FIXTURES.invalidAmount.total},${FIXTURES.invalidAmount.errorCount},${FIXTURES.invalidAmount.warningCount}`,
+]);
+assert.deepStrictEqual(csvCapture.messages.warnings, []);
+assert.deepStrictEqual(csvCapture.messages.errors, []);
+
+const jsonCsvCapture = captureOutput();
+assert.strictEqual(
+  executeArgs([invalidAmountFixturePath, '--json', '--csv'], jsonCsvCapture.output),
+  0,
+);
+assert.deepStrictEqual(jsonCsvCapture.messages.logs, [
+  `total,errorCount,warningCount\n${FIXTURES.invalidAmount.total},${FIXTURES.invalidAmount.errorCount},${FIXTURES.invalidAmount.warningCount}`,
+]);
+assert.deepStrictEqual(jsonCsvCapture.messages.warnings, []);
+assert.deepStrictEqual(jsonCsvCapture.messages.errors, []);
 
 const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'csv-amount-test-'));
 try {

@@ -109,3 +109,43 @@
 - [x] TODO 54: `master`, clean 작업 트리, 품질 게이트와 `origin/master` upstream 상태를 확인한다.
 - [x] TODO 55: 최근 15개 커밋을 검토해 프로젝트 생성부터 원격 동기화 감사까지 완료 범위를 요약한다.
 - [x] TODO 56: 안정 체크포인트와 다음 후보 작업을 기록하고 일반 push로 GitHub에 반영한다.
+
+## 28번째 LOOP — 다음 실험 기능 선정 및 브랜치 준비
+
+- [x] TODO 57: clean `master`, 품질 게이트, remote/upstream과 대상 브랜치 부재를 확인한다.
+- [x] TODO 58: 후보를 검토해 CSV 출력 기능을 작고 독립적이며 검증 가능한 다음 실험으로 선정한다.
+- [x] TODO 59: `master`에서 `experiment/csv-output`을 생성하고 소스 변경 없이 준비 결과를 기록한다.
+
+## 29번째 LOOP — CSV 출력 기능 설계 및 수용 기준 정의
+
+- [x] TODO 60: 실험 브랜치의 clean 상태, 품질 게이트와 upstream을 확인하고 CLI·테스트·검증 구조를 조사한다.
+- [x] TODO 61: `--csv` 출력 스키마, 다른 출력 모드와의 충돌 규칙, 이스케이프 및 빈 입력 동작을 설계한다.
+- [x] TODO 62: 회귀 방지와 fixture 기반 검증을 포함한 수용 기준 및 다음 LOOP 구현 범위를 기록한다.
+
+## 30번째 LOOP — CSV 출력 기능 구현
+
+- [x] TODO 63: clean 실험 브랜치와 구현 전 7개 품질 게이트 통과 상태를 확인한다.
+- [x] TODO 64: `--csv`, CSV 필드 이스케이프, 헤더와 단일 요약 행 출력을 구현한다.
+- [x] TODO 65: 기본·JSON·summary 회귀 테스트와 `--summary --csv` 조합 검증을 보강한다.
+- [x] TODO 66: README·HANDOFF·LOOP 문서를 갱신하고 구현 후 8개 품질 게이트를 통과한다.
+
+## 31-FIX LOOP — `--json --csv` 조합 오류 수정
+
+- [x] TODO 67: clean 실험 브랜치에서 `--json --csv` 종료 코드 1 충돌을 재현하고 원인을 확인한다.
+- [x] TODO 68: 인자 충돌 검사를 최소 수정해 `--csv`가 JSON과 함께 지정돼도 우선 출력되게 한다.
+- [x] TODO 69: JSON·summary 단독 회귀와 CSV 단독·두 조합의 테스트 및 품질 게이트를 보강한다.
+- [x] TODO 70: 사용 문서와 LOOP 결과를 갱신하고 9개 품질 게이트 및 직접 실행을 통과한다.
+
+## 32번째 LOOP — CSV 수용 기준 재감사
+
+- [x] TODO 71: clean 실험 브랜치, upstream과 9개 품질 게이트 통과 상태를 확인한다.
+- [x] TODO 72: master 대비 7개 파일과 4개 커밋의 변경 범위를 검토한다.
+- [x] TODO 73: 기본·summary·JSON·CSV 및 두 CSV 조합을 직접 실행해 출력 우선순위와 회귀를 확인한다.
+- [x] TODO 74: 최종 수용 기준과 문서 반영을 감사하고 master 병합 검토 가능 여부를 기록한다.
+
+## 33번째 LOOP — master 병합 전 최종 판단
+
+- [x] TODO 75: origin fetch 후 실험 브랜치·upstream과 master·origin/master 동기화를 확인한다.
+- [x] TODO 76: 9개 품질 게이트와 여섯 핵심 CLI 조합을 검증한다.
+- [x] TODO 77: master 대비 7개 파일·5개 커밋 범위와 merge-base를 점검한다.
+- [x] TODO 78: CSV 수용 기준과 병합 가능 판단을 기록하고 아직 병합하지 않는다.
