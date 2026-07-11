@@ -114,6 +114,16 @@ function Test-TimeLimit {
   return ((Get-Date) - $StartedAt).TotalMinutes -ge $Minutes
 }
 
+function Test-SupportedAutonomousNodeVersion {
+  param([Parameter(Mandatory)] [string]$NodeVersion)
+
+  if ($NodeVersion -notmatch '^v(?<Major>\d+)\.(?<Minor>\d+)\.(?<Patch>\d+)$') {
+    return $false
+  }
+
+  return ([int]$Matches.Major -in @(22, 24))
+}
+
 function Restore-IterationCheckpoint {
   param(
     [Parameter(Mandatory)] [string]$Checkpoint,
@@ -365,11 +375,11 @@ if (-not $env:ComSpec -or -not (Test-Path -LiteralPath $env:ComSpec)) { throw 'W
 $startedAt = Get-Date
 $startCheckpoint = Get-GitOutput -Arguments @('rev-parse', 'HEAD')
 $startCheckpoint | Set-Content -LiteralPath (Join-Path $runDirectory 'start-checkpoint.txt') -Encoding utf8
-$requiredNodeVersion = 'v22.17.0'
+$requiredNodeVersion = 'v22.x or v24.x'
 $nodeCommand = Get-Command node -ErrorAction SilentlyContinue
 $actualNodeVersion = if ($nodeCommand) { ((& node --version 2>&1) -join '').Trim() } else { 'not found' }
-if (-not $nodeCommand -or $LASTEXITCODE -ne 0 -or $actualNodeVersion -ne $requiredNodeVersion) {
-  $nodeError = "Autonomous runner requires Node.js $requiredNodeVersion; current version is '$actualNodeVersion'."
+if (-not $nodeCommand -or $LASTEXITCODE -ne 0 -or -not (Test-SupportedAutonomousNodeVersion -NodeVersion $actualNodeVersion)) {
+  $nodeError = "Autonomous runner requires Node.js $requiredNodeVersion LTS locally; current version is '$actualNodeVersion'."
   $record = [ordered]@{ iteration = 0; error = $nodeError; recovered = $null; skippedTask = $null }
   Write-FinalReport -RunDirectory $runDirectory -RunId $runId -Branch $branch -Reason 'node_version_mismatch' `
     -StartedAt $startedAt -Iterations 0 -SuccessfulCommits 0 -Failures 1 -NoProgress 0 `

@@ -238,3 +238,15 @@
 - [x] TODO 121: Node.js v22.17.0 사전 점검과 실패·복구·skip 정보를 포함한 최종 보고서를 구현한다.
 - [x] TODO 122: PowerShell 구문, 두 Runner smoke test, 9개 verify와 반복 독립 review를 통과한다.
 - master 병합·원격 push·브랜치 삭제: 이번 LOOP에서는 수행하지 않는다.
+
+## 44번째 LOOP — Autonomous LOOP Runner Node 사전 점검 현실화
+
+- 목표: 로컬 Autonomous LOOP Runner의 Node 사전 점검을 현실적으로 조정해 Node.js 22.x 또는 24.x LTS에서 시작 가능하게 만들고, GitHub Actions의 22.17.0 고정은 유지한다.
+- 실행 범위: `scripts/run-autonomous-loop.ps1`과 LOOP 문서에 한정한다. master 병합, 원격 push, 브랜치 삭제, workflow 변경은 이번 LOOP에서 수행하지 않는다.
+- 예상 위험: Node 버전 판정이 너무 느슨해지거나 너무 엄격해져 Runner 시작이 막히는 문제, 실패 시 보고서 메시지의 모호성, smoke test 또는 `npm run verify` 회귀.
+- 품질 게이트: 수정 후 `npm run verify` 9개 PASS, Runner smoke test 2종 PASS, current Node v24.18.0에서 Runner preflight 통과, 다른 버전은 명확한 오류와 보고서를 남기고 중단.
+- 완료 조건: 허용 Node 범위와 실패 메시지가 코드에 반영되고, 검증과 smoke test가 모두 통과하며, 문서가 현재 정책을 설명한다.
+- [x] TODO 123: 현재 브랜치, clean 상태, HEAD와 master의 분리, 현재 Node 버전과 기존 runner 정책을 확인한다.
+- [x] TODO 124: Node preflight를 22.x 또는 24.x LTS 허용으로 조정하고, GitHub Actions의 22.17.0 고정은 유지한다.
+- [x] TODO 125: `npm run verify`와 두 Runner smoke test를 다시 실행해 수정이 회귀를 만들지 확인한다.
+- [x] TODO 126: LOOP 44 결과와 새 Node 정책을 LOOP 문서에 기록하고, master 병합·원격 push 없이 마무리한다.

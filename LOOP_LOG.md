@@ -637,3 +637,16 @@
 - Runner v1.1 커밋: `4a95287 fix: make autonomous runner recover failed iterations`.
 - 원격 작업과 위험 명령: master 병합·push, 모든 원격 push, 브랜치 삭제, force push, `git branch -D`, rebase, amend, hard reset, clean 및 yolo를 사용하지 않음.
 - 결론: 실패 실행의 검증 가능한 변경은 완성됐고, 이후 실패 반복은 checkpoint로 clean 복구한 뒤 동일 과제를 건너뛰어 다음 후보를 계속 탐색할 수 있음.
+
+## 44번째 LOOP — Autonomous LOOP Runner Node 사전 점검 현실화
+
+- 목적: 로컬 Autonomous LOOP Runner의 Node 사전 점검을 현실적으로 조정해 Node.js 22.x 또는 24.x LTS에서 시작 가능하게 하고, GitHub Actions의 22.17.0 고정은 유지한다.
+- 시작 안전 점검: 현재 브랜치 `autonomy/loop-runner-v1`, `git status`는 clean에서 시작했고 master와 원격 master는 `adcf840`으로 유지됨. 현재 로컬 Node 버전은 `v24.18.0`.
+- 조사한 위험: Runner preflight가 정확히 `v22.17.0`만 허용해 로컬 v24.18.0에서 시작이 막힐 수 있었고, 실패 메시지는 node_version_mismatch 보고서로 남아야 했다. GitHub Actions workflow는 별도 정책이므로 변경하지 않았다.
+- 실제 변경 파일: `scripts/run-autonomous-loop.ps1`, `LOOP_PLAN.md`, `LOOP_LOG.md`.
+- Node 정책: 로컬 Runner preflight를 22.x 또는 24.x LTS 허용으로 조정했고, 그 외 버전은 명확한 오류 메시지와 `node_version_mismatch` 보고서로 중단하도록 유지했다.
+- 검증 결과: `npm run verify` 9개 모두 PASS.
+- smoke test 결과: `ProgressThenNoProgress`와 `ConsecutiveFailures` 두 Runner smoke test 모두 PASS.
+- 원격 검증: 이번 LOOP에서는 수행하지 않음. master 병합과 원격 push도 수행하지 않음.
+- 추가 확인: `git branch -D`와 force push는 사용하지 않았고, 소스 코드와 workflow는 변경하지 않았다.
+- 결론: 로컬 v24.18.0에서도 Runner가 시작 가능한 사전 점검으로 조정됐고, 비허용 버전은 계속해서 명확히 중단되는 정책을 확보했다.
