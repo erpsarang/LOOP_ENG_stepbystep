@@ -109,3 +109,9 @@
 - [x] TODO 54: `master`, clean 작업 트리, 품질 게이트와 `origin/master` upstream 상태를 확인한다.
 - [x] TODO 55: 최근 15개 커밋을 검토해 프로젝트 생성부터 원격 동기화 감사까지 완료 범위를 요약한다.
 - [x] TODO 56: 안정 체크포인트와 다음 후보 작업을 기록하고 일반 push로 GitHub에 반영한다.
+
+## 28번째 LOOP — 다음 실험 기능 선정 및 브랜치 준비
+
+- [x] TODO 57: clean `master`, 품질 게이트, remote/upstream과 대상 브랜치 부재를 확인한다.
+- [x] TODO 58: 후보를 검토해 CSV 출력 기능을 작고 독립적이며 검증 가능한 다음 실험으로 선정한다.
+- [x] TODO 59: `master`에서 `experiment/csv-output`을 생성하고 소스 변경 없이 준비 결과를 기록한다.

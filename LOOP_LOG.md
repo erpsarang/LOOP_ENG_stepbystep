@@ -298,3 +298,18 @@
 - 다음 후보 작업: 대용량 CSV 스트리밍 처리, 금액 숫자 정밀도 개선, CSV 형식 범용성 확대, 타 운영체제 검증 자동화를 후속 LOOP 후보로 유지함.
 - force push: 사용하지 않음. LOOP 27 문서 커밋은 일반 `git push`로만 반영함.
 - 결론: 검증된 기능과 전체 Git 이력이 GitHub에 반영된 안정 체크포인트 상태임.
+
+## 28번째 LOOP — 다음 실험 기능 선정 및 브랜치 준비
+
+- 목적: 다음 실험 기능 후보 선정 및 실험 브랜치 준비.
+- 기준 브랜치 상태: `master`가 clean 상태였고 `origin/master`와 함께 `6c17e3b`를 가리킴.
+- `npm run verify`: 브랜치 생성 전 성공, 종료 코드 0, 7개 검증 모두 PASS.
+- remote/upstream 상태: origin은 `https://github.com/erpsarang/LOOP_ENG_stepbystep`이며, 기준 브랜치 `master`가 `origin/master`를 추적함.
+- 검토 후보: CSV 출력 기능, 의존성 정리, 소스 구조 정리, 다른 OS 검증, README 보강.
+- 선정 후보: CSV 출력 기능.
+- 선정 이유: 기존 입력·집계 흐름에 독립적인 출력 형식으로 추가할 수 있어 범위가 작고, fixture 기반 출력 및 옵션 충돌을 명확히 검증할 수 있음.
+- 브랜치 사전 확인: `experiment/csv-output`이 로컬과 origin에 모두 존재하지 않음을 확인함.
+- 생성 브랜치: `master`에서 `git switch -c experiment/csv-output`으로 `experiment/csv-output` 생성 및 이동 성공.
+- 소스 코드: 이번 LOOP에서는 수정하지 않음.
+- force push: 사용하지 않음. 브랜치 문서 커밋은 일반 push로만 반영함.
+- 결론: 다음 LOOP에서 CSV 출력 기능을 설계하거나 구현할 수 있는 실험 브랜치 준비 완료.
