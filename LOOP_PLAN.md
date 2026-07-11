@@ -115,3 +115,9 @@
 - [x] TODO 57: clean `master`, 품질 게이트, remote/upstream과 대상 브랜치 부재를 확인한다.
 - [x] TODO 58: 후보를 검토해 CSV 출력 기능을 작고 독립적이며 검증 가능한 다음 실험으로 선정한다.
 - [x] TODO 59: `master`에서 `experiment/csv-output`을 생성하고 소스 변경 없이 준비 결과를 기록한다.
+
+## 29번째 LOOP — CSV 출력 기능 설계 및 수용 기준 정의
+
+- [x] TODO 60: 실험 브랜치의 clean 상태, 품질 게이트와 upstream을 확인하고 CLI·테스트·검증 구조를 조사한다.
+- [x] TODO 61: `--csv` 출력 스키마, 다른 출력 모드와의 충돌 규칙, 이스케이프 및 빈 입력 동작을 설계한다.
+- [x] TODO 62: 회귀 방지와 fixture 기반 검증을 포함한 수용 기준 및 다음 LOOP 구현 범위를 기록한다.
