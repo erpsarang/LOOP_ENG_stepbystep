@@ -95,5 +95,5 @@
 
 - [x] TODO 47: `master`, clean 작업 트리, 품질 게이트와 origin URL을 확인한다.
 - [x] TODO 48: 원격 저장소에 기존 브랜치가 없음을 확인하고 force push 금지 상태에서 최초 push를 준비한다.
-- [ ] TODO 49: `git push -u origin master`를 실행하고 원격 master 및 upstream 설정을 확인한다.
-- [ ] TODO 50: push 완료 결과를 문서 커밋으로 기록하고 일반 `git push`로 원격에 반영한다.
+- [x] TODO 49: `git push -u origin master`를 실행하고 원격 master 및 upstream 설정을 확인한다.
+- [x] TODO 50: push 완료 결과를 문서 커밋으로 기록하고 일반 `git push`로 원격에 반영한다.
