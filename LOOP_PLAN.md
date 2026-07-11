@@ -84,3 +84,9 @@
 - [x] TODO 41: 프로젝트 경로, `master` 브랜치와 clean 작업 트리를 확인한다.
 - [x] TODO 42: 품질 게이트, 삭제 브랜치 부재, 최근 커밋 이력과 로컬 브랜치 목록을 감사한다.
 - [x] TODO 43: 원격 저장소 설정과 GitHub 미푸시 상태를 확인하고 향후 push 준비 상태를 기록한다.
+
+## 24번째 LOOP — GitHub push 전 remote 연결 준비
+
+- [x] TODO 44: `master`, clean 작업 트리와 품질 게이트 통과 상태를 확인한다.
+- [x] TODO 45: 기존 remote 부재를 확인하고 지정된 GitHub 저장소를 `origin`으로 추가한다.
+- [x] TODO 46: 최종 origin URL과 미푸시 상태를 확인하고 다음 LOOP의 push 가능 여부를 기록한다.
