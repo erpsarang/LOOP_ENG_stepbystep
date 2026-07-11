@@ -170,3 +170,10 @@
 - [x] TODO 88: `experiment/csv-output`의 master 병합 완료 상태를 확인한다.
 - [x] TODO 89: 로컬·원격 실험 브랜치가 모두 존재함을 확인하고 삭제 권고 여부를 판단한다.
 - [x] TODO 90: 최종 감사 결과를 기록하되 실험 브랜치는 실제 삭제하지 않는다.
+
+## 37번째 LOOP — 병합 완료된 CSV 실험 브랜치 안전 정리
+
+- [x] TODO 91: clean master, 9개 품질 게이트와 master 세 해시 일치를 확인한다.
+- [x] TODO 92: `experiment/csv-output`의 master 병합과 로컬·원격 존재를 재확인한다.
+- [x] TODO 93: 로컬 브랜치를 `git branch -d`로, 원격 브랜치를 delete push로 안전 삭제한다.
+- [x] TODO 94: 로컬·원격 브랜치 부재와 강제 삭제·force push 미사용을 기록한다.

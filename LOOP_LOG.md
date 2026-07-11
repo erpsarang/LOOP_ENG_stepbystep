@@ -476,3 +476,20 @@
 - 실제 브랜치 삭제: 수행하지 않음. 로컬과 원격 실험 브랜치를 모두 보존함.
 - force push: 사용하지 않음.
 - 최종 결론: CSV 기능은 검증된 상태로 GitHub master에 완전히 반영됐으며, 후속 승인 범위에서 실험 브랜치 정리를 진행할 수 있음.
+
+## 37번째 LOOP — 병합 완료된 CSV 실험 브랜치 안전 정리
+
+- 목적: 병합 완료된 CSV 실험 브랜치 안전 정리.
+- 현재 브랜치: `master`.
+- 작업 트리 상태: 문서 수정 전 clean.
+- `npm run verify`: 성공, 종료 코드 0, 9개 검증 모두 PASS.
+- master 동기화: 삭제 전 HEAD, `origin/master`, 원격 `refs/heads/master`가 모두 `0204a0c474d6134261a574a2dbef8d6d6cce3753`로 일치함.
+- 병합 확인: `git branch --merged master`에 `experiment/csv-output`이 포함되고 merge commit `67abe98`의 그래프에 전체 이력이 보존됨.
+- 삭제 전 상태: 로컬 `experiment/csv-output`과 원격 `refs/heads/experiment/csv-output`이 모두 `c924fca`를 가리키며 존재함.
+- 로컬 삭제 명령: `git branch -d experiment/csv-output`.
+- 로컬 삭제 결과: 성공. 로컬 브랜치 목록에서 더 이상 존재하지 않음을 확인함.
+- 원격 삭제 명령: `git push origin --delete experiment/csv-output`.
+- 원격 삭제 결과: 성공. `git ls-remote --heads origin experiment/csv-output` 결과가 비어 있음을 확인함.
+- 강제 삭제: `git branch -D`를 사용하지 않음.
+- force push: `--force`, `-f`, `--force-with-lease`를 사용하지 않음.
+- 최종 결론: CSV 기능과 이력은 master에 보존된 상태에서 로컬·원격 실험 브랜치를 안전하게 정리 완료함.
