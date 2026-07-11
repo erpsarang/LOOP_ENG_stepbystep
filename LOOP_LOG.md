@@ -612,3 +612,28 @@
 - 소스 기능: 변경하지 않음. 새 기능·의존성·검증 완화도 추가하지 않음.
 - 원격 작업: push하지 않음. master 병합, 실험 브랜치 삭제, force push, `git branch -D`, rebase, amend, hard reset, clean 및 yolo를 사용하지 않음.
 - 결론: 제한된 권한·범위·시간과 독립 품질 게이트, 감사 가능한 실행 기록을 갖춘 Autonomous LOOP Runner v1이 로컬 전용 autonomy 브랜치에 준비됨.
+
+## 43번째 LOOP — 실패 실행 복구 및 Autonomous LOOP Runner v1.1
+
+- 목적: `run-20260712-005850` 실패 상태를 안전하게 해소하고 반복별 자동 복구가 가능한 Runner v1.1 구축.
+- 현재 브랜치: `autonomy/loop-runner-v1`; master 전환·병합·push 없이 로컬에서만 작업함.
+- 실패 실행: 4회 중 첫 반복은 `593f658`로 성공했고, 두 번째 반복은 review marker 미인식 후 미커밋 `app.js`·`test.js` 변경을 남김. 이후 두 반복은 dirty tree로 즉시 실패해 `consecutive_failure_limit`에 도달함.
+- `test.js:183` 원인: 새 회귀 테스트가 `--json --summary --csv`에서 CSV 우선과 종료 코드 0을 요구했지만, 기존 JSON·summary 충돌 검사가 CSV 우선 분기보다 먼저 종료 코드 1을 반환함.
+- 안전한 완성 판단: README에 이미 CSV가 다른 출력 옵션보다 우선한다고 정의되어 있어 새 요구사항이 아니라 기존 계약의 누락 조합임을 확인함.
+- 복구 변경: CSV가 없을 때만 기존 JSON·summary 충돌 오류를 유지하고 CSV가 있으면 기존 CSV 출력 분기로 진행하도록 guard 한 줄을 제한적으로 수정함. 회귀 테스트는 세 출력 옵션 조합의 종료 코드 0, CSV 헤더·단일 행과 stderr 부재를 확인함.
+- 복구 품질 게이트: `npm test`와 `npm run verify` 9개 모두 PASS. 복구 커밋은 `5b5912e fix: complete recovered csv precedence task`.
+- 시작 체크포인트: 실제 실행 시작 HEAD를 `start-checkpoint.txt`와 최종 JSON·Markdown 보고서에 저장함. 각 반복 시작 HEAD도 `checkpoint.txt`와 iteration record에 저장함.
+- 자동 복구: 실패 시 checkpoint가 현재 HEAD의 조상임을 확인하고, 예상 밖 로컬 commit은 `git reset --mixed`로 되돌린 뒤 `git restore --source=<checkpoint> --staged --worktree -- .`로 tracked 상태를 복원함. 저장소 내부 untracked 파일만 안전 경로 검사 후 제거하고 HEAD·clean 상태를 재확인함. `git reset --hard`와 `git clean`은 사용하지 않음.
+- 과제 skip: 분석 첫 줄의 `TASK: <specific improvement>` 계약으로 실패 과제를 식별하고, 복구 성공 후 skip 목록을 다음 분석 prompt와 최종 보고서에 전달함. 계약 누락 시 분석 본문 요약을 보존함.
+- 실패 한도: 복구 성공 실패는 `recovered-failure`로 기록하고 연속 실패를 증가시키지 않음. checkpoint 복구 자체가 실패한 `recovery-failure`만 연속 실패 한도에 포함함.
+- review 개선: 기본 `codex review --uncommitted` 결과를 별도 읽기 전용 역할의 `codex exec`가 마지막 marker로 분류함. classifier 전후 working tree의 tracked diff, staged diff와 untracked SHA-256 fingerprint가 같아야 함.
+- Node 기준: 자율 실행 전 Node.js가 정확히 `v22.17.0`인지 확인하고, 명령 부재 또는 버전 불일치 시 iteration 0의 `node_version_mismatch` 최종 보고서와 종료 코드 3을 남김. 설치·버전 변경은 수행하지 않음.
+- 현재 환경 사전 점검: 설치 버전 `v24.18.0`에서 실제 Runner를 호출해 source 변경 없이 종료 코드 3, checkpoint `4a95287`, 명확한 mismatch 원인과 JSON·Markdown 보고서 생성을 확인함.
+- 최종 보고: 실패 원인, checkpoint, 복구 여부, skipped task 목록을 JSON과 Markdown 모두에 기록함.
+- smoke test 1: 진전 후 연속 무진전이 `no_progress_limit`으로 종료되고 보고서가 생성됨.
+- smoke test 2: 복구된 실패 후 다음 과제로 진행하고, 복구 불가능 실패 2회만 `consecutive_failure_limit`으로 종료됨.
+- 독립 review: 총 네 차례 수행. HEAD 미복원, Node 명령 부재, marker 오분류, 불명확한 skip 식별, mismatch 종료 코드, classifier 오염 가능성을 순차 수정했고 최종 review는 functional regression 없음으로 판정함.
+- Runner 최종 검증: PowerShell 구문 PASS, 두 smoke PASS, `git diff --check` PASS, `npm run verify` 9개 PASS.
+- Runner v1.1 커밋: `4a95287 fix: make autonomous runner recover failed iterations`.
+- 원격 작업과 위험 명령: master 병합·push, 모든 원격 push, 브랜치 삭제, force push, `git branch -D`, rebase, amend, hard reset, clean 및 yolo를 사용하지 않음.
+- 결론: 실패 실행의 검증 가능한 변경은 완성됐고, 이후 실패 반복은 checkpoint로 clean 복구한 뒤 동일 과제를 건너뛰어 다음 후보를 계속 탐색할 수 있음.

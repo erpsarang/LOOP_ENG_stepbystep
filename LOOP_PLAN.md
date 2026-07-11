@@ -227,3 +227,14 @@
 - [x] TODO 115: 반복별 로그, JSONL 기록, 최종 JSON·Markdown 보고서를 `.autonomous-loop/runs`에 보존하고 Git에서 제외한다.
 - [x] TODO 116: 무진전 종료와 연속 실패 종료의 두 smoke test, 구문 검사, 독립 review와 로컬 9개 품질 게이트를 통과한다.
 - master 병합·원격 push·브랜치 삭제: 이번 LOOP에서는 수행하지 않는다.
+
+## 43번째 LOOP — 실패 실행 복구 및 Autonomous LOOP Runner v1.1
+
+- 목표: 실패 실행의 안전한 변경은 완성하고, 향후 반복 실패가 작업 트리를 오염시키지 않도록 체크포인트 복구와 과제 skip을 구현한다.
+- [x] TODO 117: 실패 보고서와 iteration 로그, `test.js:183`, 작업 트리 diff를 분석한다.
+- [x] TODO 118: CSV 우선순위 변경을 최소 완성하고 `npm test`와 9개 `npm run verify`를 통과한다.
+- [x] TODO 119: 실행·반복 체크포인트, 실패 시 HEAD·index·worktree·untracked 복구와 실패 과제 skip을 구현한다.
+- [x] TODO 120: 복구 성공 실패를 분리하고, 복구 불가능한 연속 실패에만 중단 한도를 적용한다.
+- [x] TODO 121: Node.js v22.17.0 사전 점검과 실패·복구·skip 정보를 포함한 최종 보고서를 구현한다.
+- [x] TODO 122: PowerShell 구문, 두 Runner smoke test, 9개 verify와 반복 독립 review를 통과한다.
+- master 병합·원격 push·브랜치 삭제: 이번 LOOP에서는 수행하지 않는다.
