@@ -90,3 +90,10 @@
 - [x] TODO 44: `master`, clean 작업 트리와 품질 게이트 통과 상태를 확인한다.
 - [x] TODO 45: 기존 remote 부재를 확인하고 지정된 GitHub 저장소를 `origin`으로 추가한다.
 - [x] TODO 46: 최종 origin URL과 미푸시 상태를 확인하고 다음 LOOP의 push 가능 여부를 기록한다.
+
+## 25번째 LOOP — GitHub 최초 push
+
+- [x] TODO 47: `master`, clean 작업 트리, 품질 게이트와 origin URL을 확인한다.
+- [x] TODO 48: 원격 저장소에 기존 브랜치가 없음을 확인하고 force push 금지 상태에서 최초 push를 준비한다.
+- [ ] TODO 49: `git push -u origin master`를 실행하고 원격 master 및 upstream 설정을 확인한다.
+- [ ] TODO 50: push 완료 결과를 문서 커밋으로 기록하고 일반 `git push`로 원격에 반영한다.

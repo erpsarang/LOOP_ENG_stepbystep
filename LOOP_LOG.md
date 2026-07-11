@@ -248,3 +248,16 @@
 - 최종 remote URL: fetch와 push 모두 `https://github.com/erpsarang/LOOP_ENG_stepbystep`으로 확인됨.
 - GitHub push: 의도적으로 수행하지 않음.
 - 결론: remote 연결 준비가 완료되어 다음 LOOP에서 인증과 저장소 접근 권한을 확인한 뒤 push 가능함.
+
+## 25번째 LOOP — GitHub 최초 push
+
+### Push 전 점검
+
+- 목적: GitHub 최초 push.
+- 현재 브랜치: `master`.
+- 작업 트리 상태: 문서 수정 전 clean.
+- `npm run verify`: 성공, 종료 코드 0, 7개 검증 모두 PASS.
+- origin remote URL: fetch와 push 모두 `https://github.com/erpsarang/LOOP_ENG_stepbystep`으로 확인됨.
+- 원격 브랜치 확인: `git ls-remote --heads origin` 결과가 비어 있어 기존 원격 브랜치나 커밋을 가리키는 head가 없음을 확인함.
+- force push 금지: `--force`, `-f`, `--force-with-lease`를 사용하지 않음.
+- 최초 push 예정 명령: `git push -u origin master`.
