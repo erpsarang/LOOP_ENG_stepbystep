@@ -437,3 +437,16 @@
 - 병합 가능 판단: **merge recommended**.
 - master 병합: 아직 수행하지 않음.
 - force push: 사용하지 않음. 판단 문서 커밋은 일반 `git push`로만 반영함.
+
+## 34번째 LOOP — CSV 실험 브랜치 master 병합
+
+- 목적: CSV 실험 브랜치 master 병합.
+- 병합 대상: `experiment/csv-output`.
+- 병합 방식: `git merge --no-ff experiment/csv-output -m "merge: csv output experiment"`.
+- 병합 전 상태: `master`와 `origin/master`가 `6c17e3b`로 일치하고 작업 트리 clean.
+- 병합 전 `npm run verify`: 성공, 종료 코드 0, master의 기존 7개 검증 모두 PASS.
+- 병합 결과: 충돌 없이 성공, 두 부모를 가진 merge commit `67abe98 merge: csv output experiment` 생성.
+- 병합 후 `npm run verify`: 성공, 종료 코드 0, CSV 조합을 포함한 9개 검증 모두 PASS.
+- 직접 실행: `fixtures/valid.csv`의 `--csv`, `--summary --csv`, `--json --csv`가 모두 종료 코드 0이며 헤더와 `1500.5,0,0`을 출력함.
+- master push: 아직 수행하지 않음. LOOP 35 최종 품질 게이트 이후 일반 push 예정.
+- force push: 사용하지 않음.

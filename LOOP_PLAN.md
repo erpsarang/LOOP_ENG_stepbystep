@@ -149,3 +149,10 @@
 - [x] TODO 76: 9개 품질 게이트와 여섯 핵심 CLI 조합을 검증한다.
 - [x] TODO 77: master 대비 7개 파일·5개 커밋 범위와 merge-base를 점검한다.
 - [x] TODO 78: CSV 수용 기준과 병합 가능 판단을 기록하고 아직 병합하지 않는다.
+
+## 34번째 LOOP — CSV 실험 브랜치 master 병합
+
+- [x] TODO 79: master가 `origin/master`와 동일하고 병합 전 기존 7개 품질 게이트가 통과함을 확인한다.
+- [x] TODO 80: `experiment/csv-output`을 `--no-ff` merge commit으로 충돌 없이 병합한다.
+- [x] TODO 81: 병합 후 9개 품질 게이트와 CSV 단독·두 조합을 검증한다.
+- [x] TODO 82: 병합 결과를 문서 커밋으로 기록하고 master push는 LOOP 35까지 보류한다.
