@@ -386,3 +386,36 @@
 - master 병합: 아직 수행하지 않음.
 - force push: 사용하지 않음. 수정 커밋은 일반 `git push`로만 반영함.
 - 결론: 다음 LOOP에서 CSV 수용 기준을 재감사하거나 master 병합을 검토할 수 있음.
+
+## 32번째 LOOP — CSV 수용 기준 재감사
+
+- 목적: LOOP 31-FIX 이후 CSV 수용 기준 재감사.
+- 현재 브랜치: `experiment/csv-output`.
+- 작업 트리 상태: 문서 수정 전 clean.
+- `npm run verify`: 성공, 종료 코드 0, 9개 검증 모두 PASS.
+- upstream 상태: `origin/experiment/csv-output` 추적, 감사 시작 시 로컬과 upstream 모두 `2ecf17f`.
+- master 대비 변경 파일 요약: `app.js`, `test.js`, `verify.js`, `README.md`, `HANDOFF.md`, `LOOP_PLAN.md`, `LOOP_LOG.md`의 7개 파일, 237 insertions 및 14 deletions. 기능·테스트·사용 문서·LOOP 기록에 한정되어 불필요한 대규모 리팩터링 없음.
+- master 대비 커밋 목록: `9dd4133 docs: record loop 28 next experiment branch`, `ca0ab9c docs: record loop 29 csv design`, `0a2a42e feat: add csv output option`, `2ecf17f fix: allow csv output with json option`.
+- 코드·테스트 확인: `app.js`에 `escapeCsvValue`, `formatCsvResult`와 CSV 우선 출력 분기가 있고, `test.js`와 `verify.js`에 이스케이프·헤더·단일 행·summary/JSON 조합 검증이 있음.
+- README/HANDOFF: `--csv`, `--summary --csv`, `--json --csv` 사용법, CSV 우선 규칙과 품질 게이트 범위가 모두 반영됨.
+- 직접 실행 fixture: `fixtures/valid.csv`.
+- 기본 실행: 종료 코드 0, 기존 `amount 합계: 1500.5, 오류 행 수: 0` 유지.
+- `--summary`: 종료 코드 0, 기존 합계·오류·경고 수 요약 유지.
+- `--json`: 종료 코드 0, 기존 JSON 합계 1500.5와 오류 수 0 유지.
+- `--csv`: 종료 코드 0, 첫 줄 `total,errorCount,warningCount`, 둘째 줄 `1500.5,0,0`의 단일 요약 행 출력.
+- `--summary --csv`: 종료 코드 0, summary 대신 CSV 헤더와 단일 행이 우선 출력됨.
+- `--json --csv`: 종료 코드 0, JSON 대신 CSV 헤더와 단일 행이 우선 출력됨.
+
+### 최종 수용 기준
+
+- PASS: `npm run verify` 통과.
+- PASS: 기본·summary·JSON 단독 출력 회귀 없음.
+- PASS: CSV 헤더와 단일 요약 데이터 행 정확성.
+- PASS: summary+CSV 및 JSON+CSV 조합에서 에러 없이 CSV 우선.
+- PASS: 콤마, 큰따옴표와 줄바꿈을 처리하는 CSV escaping 구현 및 단위 테스트 존재.
+- PASS: README와 HANDOFF 사용법 반영.
+- PASS: master 대비 변경이 관련 7개 파일과 목적별 4개 커밋에 한정됨.
+- 소스 코드: 이번 LOOP에서는 수정하지 않음.
+- master 병합: 이번 LOOP에서는 수행하지 않음.
+- force push: 사용하지 않음. 감사 문서 커밋은 일반 `git push`로만 반영함.
+- 결론: 최종 수용 기준을 모두 충족해 다음 LOOP에서 master 병합 검토 가능.
