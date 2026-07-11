@@ -1,11 +1,14 @@
 const fs = require('fs');
 const path = require('path');
+const rowsWithQuotedFields = new WeakSet();
 
 function parseCsv(text) {
   const normalizedText = text.startsWith('\uFEFF') ? text.slice(1) : text;
   const rows = [];
   let row = [];
   let field = '';
+  let fieldStarted = false;
+  let rowHasQuotedField = false;
   let quoted = false;
 
   for (let i = 0; i < normalizedText.length; i += 1) {
@@ -21,20 +24,27 @@ function parseCsv(text) {
         field += char;
       }
     } else if (char === '"') {
+      fieldStarted = true;
+      rowHasQuotedField = true;
       quoted = true;
     } else if (char === ',') {
       row.push(field);
       field = '';
+      fieldStarted = false;
     } else if (char === '\n' || char === '\r') {
       row.push(field);
+      if (rowHasQuotedField) rowsWithQuotedFields.add(row);
       rows.push(row);
       row = [];
       field = '';
+      fieldStarted = false;
+      rowHasQuotedField = false;
       if (char === '\r' && normalizedText[i + 1] === '\n') {
         i += 1;
       }
     } else {
       field += char;
+      fieldStarted = true;
     }
   }
 
@@ -42,8 +52,9 @@ function parseCsv(text) {
     throw new Error('CSV의 따옴표가 닫히지 않았습니다.');
   }
 
-  if (field !== '' || row.length > 0) {
+  if (fieldStarted || row.length > 0) {
     row.push(field);
+    if (rowHasQuotedField) rowsWithQuotedFields.add(row);
     rows.push(row);
   }
 
@@ -53,7 +64,9 @@ function parseCsv(text) {
 function summarizeAmounts(rows, warn = () => {}) {
   const nonEmptyRows = rows
     .map((row, index) => ({ row, rowNumber: index + 1 }))
-    .filter(({ row }) => row.some((field) => field.trim() !== ''));
+    .filter(({ row }) => (
+      rowsWithQuotedFields.has(row) || row.some((field) => field.trim() !== '')
+    ));
 
   if (nonEmptyRows.length === 0) {
     throw new Error('CSV 파일이 비어 있습니다.');

@@ -73,6 +73,15 @@ assert.deepStrictEqual(blankLineWarnings, [
   '경고: 4행의 amount 값이 올바른 숫자가 아닙니다: invalid',
 ]);
 
+const quotedEmptyAmountWarnings = [];
+assert.deepStrictEqual(
+  sumAmount('amount\n""', (message) => quotedEmptyAmountWarnings.push(message)),
+  { total: 0, errorCount: 1 },
+);
+assert.deepStrictEqual(quotedEmptyAmountWarnings, [
+  '경고: 2행의 amount 값이 올바른 숫자가 아닙니다: (빈 값)',
+]);
+
 assert.strictEqual(
   formatResult({ total: 30, errorCount: 2 }),
   'amount 합계: 30, 오류 행 수: 2',
