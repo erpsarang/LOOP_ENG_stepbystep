@@ -124,6 +124,7 @@ assert.strictEqual(executeArgs(['--unknown'], invalidOptionCapture.output), 1);
 assert.deepStrictEqual(invalidOptionCapture.messages.errors, ['오류: 알 수 없는 옵션입니다: --unknown']);
 
 assert.deepStrictEqual(sumAmount('item,amount\n"A, large",10\nB,-3\n'), { total: 7, errorCount: 0 });
+assert.deepStrictEqual(sumAmount('item,amount\rA,10\rB,20\r'), { total: 30, errorCount: 0 });
 assert.deepStrictEqual(sumAmount('item,amount\nA, 1000 \n'), { total: 1000, errorCount: 0 });
 assert.deepStrictEqual(sumAmount('item,amount\nA,1000.5\n'), { total: 1000.5, errorCount: 0 });
 assert.deepStrictEqual(sumAmount('item,amount\nA,-500\n'), { total: -500, errorCount: 0 });

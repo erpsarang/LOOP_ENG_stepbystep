@@ -25,12 +25,15 @@ function parseCsv(text) {
     } else if (char === ',') {
       row.push(field);
       field = '';
-    } else if (char === '\n') {
+    } else if (char === '\n' || char === '\r') {
       row.push(field);
       rows.push(row);
       row = [];
       field = '';
-    } else if (char !== '\r') {
+      if (char === '\r' && normalizedText[i + 1] === '\n') {
+        i += 1;
+      }
+    } else {
       field += char;
     }
   }
