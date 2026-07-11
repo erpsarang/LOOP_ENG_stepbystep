@@ -66,3 +66,9 @@
 - [x] TODO 32: 실험 브랜치와 master를 각각 clean 상태에서 검증한다.
 - [x] TODO 33: `experiment/summary-option`을 `--no-ff` merge commit으로 master에 병합한다.
 - [x] TODO 34: 병합 후 품질 게이트와 그래프를 확인하고 결과를 기록한다.
+
+## 21번째 LOOP — 병합 완료된 실험 브랜치 정리 판단
+
+- [x] TODO 35: 현재 브랜치, 작업 트리와 master 병합 브랜치 목록을 확인한다.
+- [x] TODO 36: 커밋 그래프와 품질 게이트로 `experiment/summary-option`의 병합 완료 상태를 검증한다.
+- [x] TODO 37: 브랜치 정리 판단과 실제 삭제 전 사용자 확인 필요 여부를 기록한다.

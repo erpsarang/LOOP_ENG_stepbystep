@@ -199,3 +199,15 @@
 - 그래프 확인: master merge commit의 두 부모 아래에 기준점과 실험 브랜치의 기능·문서 커밋이 보존됨.
 - 병합 직후 상태: master 작업 트리 clean.
 - 재시도 및 충돌 해결: 0회.
+
+## 21번째 LOOP — 병합 완료된 실험 브랜치 정리 판단
+
+- 현재 브랜치: `master`.
+- 시작 상태: 작업 트리 clean.
+- 병합 확인: `git branch --merged master`에 `experiment/summary-option`이 포함됨.
+- 로그 확인: merge commit `34dc644 merge: summary option`과 실험 브랜치의 기능·문서 커밋이 `git log --oneline --graph --decorate --all -10`에서 추적 가능함.
+- `npm run verify`: 성공, 종료 코드 0, 7개 검증 모두 PASS.
+- 검증 재시도: 최초 샌드박스 실행은 자식 프로세스 생성이 `EPERM`으로 차단되어 실패했고, 권한을 허용한 재실행에서 정상 통과함.
+- 브랜치 정리 판단: **delete recommended**.
+- 판단 근거: 변경사항은 master에 병합 완료되었고 Git 로그에 이력이 보존되어 브랜치 자체를 학습 기록으로 유지할 추가 가치가 크지 않음.
+- 삭제 실행: 하지 않음. 실제 삭제 전 사용자 확인이 필요함.
