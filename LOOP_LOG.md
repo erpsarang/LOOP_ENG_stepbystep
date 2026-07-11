@@ -558,7 +558,12 @@
 - 원격 검증 절차: 실험 브랜치를 일반 push한 뒤 `gh` 설치·인증 상태를 확인하고, 사용 가능하면 workflow run의 세 matrix job이 완료될 때까지 확인함.
 - 최초 원격 run `29148829124`: Windows PASS, Ubuntu PASS, macOS FAIL. macOS는 `macos-latest` arm64에서 Node.js 14.14.0 배포물을 찾지 못해 setup 단계에서 실패함.
 - 원인과 최소 수정: 애플리케이션이나 테스트 실패가 아닌 runner 아키텍처의 구버전 Node 배포물 가용성 문제. workflow의 공통 Node 버전만 `22.17.0`으로 변경하며 소스·테스트·package 설정은 유지함.
-- 원격 수정 재시도: 1회차 예정(허용 최대 3회).
-- 아직 확인되지 않은 항목: 수정 push 후 GitHub-hosted Windows, Ubuntu, macOS의 9개 품질 게이트 결과.
+- 원격 수정 재시도: 1회 수행(허용 최대 3회 이내).
+- 수정 커밋: `9fa8ae2 ci: use node 22 for cross-platform verification`.
+- 최종 원격 run: `29149039614`, 전체 conclusion `success`.
+- Windows 결과: `windows-latest`, Node.js 22.17.0 설정과 `Run quality gate` 모두 PASS.
+- Ubuntu 결과: `ubuntu-latest`, Node.js 22.17.0 설정과 `Run quality gate` 모두 PASS.
+- macOS 결과: `macos-latest`, Node.js 22.17.0 설정과 `Run quality gate` 모두 PASS.
+- 완료 판단: 세 운영체제에서 동일한 Node.js 버전과 동일한 `npm run verify`가 성공해 LOOP 40의 교차 OS 수용 기준을 충족함.
 - master 병합·push, PR 병합, release/tag와 실험 브랜치 삭제는 수행하지 않음.
 - force push와 `git branch -D`는 사용하지 않음.

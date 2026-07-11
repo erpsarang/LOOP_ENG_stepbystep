@@ -202,5 +202,5 @@
 - [x] TODO 103: 동기화된 clean master와 기준 9개 품질 게이트를 확인하고 실험 브랜치를 생성한다.
 - [x] TODO 104: 검증 스크립트의 셸·경로·대소문자·줄바꿈·인코딩·임시 경로·Node 버전 위험을 조사한다.
 - [x] TODO 105: 세 OS와 동일한 Node.js 22.17.0 matrix에서 `npm run verify`를 실행하는 workflow를 작성한다.
-- [ ] TODO 106: 로컬 검증, 커밋·push와 GitHub Actions OS별 결과 확인을 완료한다.
+- [x] TODO 106: 로컬 검증, 커밋·push와 GitHub Actions OS별 결과 확인을 완료한다.
 - master 병합: 이번 LOOP에서는 수행하지 않는다.
