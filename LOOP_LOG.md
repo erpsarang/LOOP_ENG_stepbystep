@@ -536,3 +536,26 @@
 - 강제 삭제: `git branch -D`를 사용하지 않음.
 - force push: 사용하지 않음.
 - 결론: 다음 실험은 다른 OS 검증으로 선정했으며, 별도 설계 LOOP와 실험 브랜치에서 안전하게 시작할 준비가 됨.
+
+## 40번째 LOOP — GitHub Actions 교차 운영체제 검증
+
+- 목표: GitHub Actions에서 `npm run verify`를 Windows, Ubuntu, macOS에서 실제 실행하는 교차 운영체제 검증 체계 구축.
+- 시작 안전 점검: `master`와 `origin/master`가 `784256a7019fc9d1e905ceb9581be06e89672646`으로 일치하고 작업 트리 clean, 로컬 기준 9개 검증 모두 PASS.
+- 실험 브랜치: 동기화된 master에서 `experiment/cross-platform-verify` 생성. master 자체는 시작 커밋을 유지함.
+- 기존 CI: `.github` 디렉터리와 workflow 없음.
+- lock/의존성: `package-lock.json`과 외부 npm 의존성이 없고 프로젝트 문서상 설치 없이 실행 가능함. 불필요한 lock 파일이나 설치 단계를 추가하지 않음.
+- 셸 조사: `verify.js`는 Windows에서 `ComSpec /d /s /c npm test`, Unix 계열에서 `npm test`를 직접 실행하도록 이미 분기되어 있음. PowerShell 또는 Bash 전용 프로젝트 명령 없음.
+- 경로 조사: `path.resolve`, `__dirname`, `os.tmpdir()`과 Node 파일 API를 사용해 경로 구분자에 직접 의존하지 않음. fixture import의 파일명 대소문자도 실제 파일과 일치함.
+- 줄바꿈·인코딩 조사: 입력 파서는 CRLF와 LF, UTF-8 BOM을 테스트하고 출력 포맷은 명시적 `\n`을 사용함. `spawnSync` 결과 비교는 `trim()` 또는 명시적 문자열로 수행되어 runner 기본 줄바꿈의 영향이 제한됨.
+- 임시 파일 조사: `fs.mkdtempSync(path.join(os.tmpdir(), ...))`를 사용하고 `finally`에서 Node API로 정리해 OS별 임시 경로를 하드코딩하지 않음.
+- Node.js 조건: `package.json`의 최소 지원 버전 `>=14.14`를 따르고 세 OS에서 동일한 `14.14.0`을 사용함. 최신 버전만 확인하는 대신 선언된 최소 호환성을 직접 검증하기 위한 선택임.
+- workflow: `.github/workflows/cross-platform-verify.yml` 신규 작성.
+- matrix: `windows-latest`, `ubuntu-latest`, `macos-latest`, `fail-fast: false`.
+- 실행 조건: `experiment/cross-platform-verify` push와 해당 head 브랜치에서 `master`로 향하는 pull request.
+- 실행 단계: checkout, Node.js 14.14.0 설정, Node/npm 버전 출력, `npm run verify`.
+- 실제 변경 파일: workflow와 `LOOP_PLAN.md`, `LOOP_LOG.md`. 애플리케이션 소스·테스트·package 파일은 변경하지 않음.
+- workflow 작성 후 로컬 `npm run verify`: 성공, 종료 코드 0, 9개 검증 모두 PASS.
+- 원격 검증 절차: 실험 브랜치를 일반 push한 뒤 `gh` 설치·인증 상태를 확인하고, 사용 가능하면 workflow run의 세 matrix job이 완료될 때까지 확인함.
+- 아직 확인되지 않은 항목: GitHub-hosted 각 OS runner에서 Node.js 14.14.0 설치와 9개 품질 게이트의 실제 결과.
+- master 병합·push, PR 병합, release/tag와 실험 브랜치 삭제는 수행하지 않음.
+- force push와 `git branch -D`는 사용하지 않음.

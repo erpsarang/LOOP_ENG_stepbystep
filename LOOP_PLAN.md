@@ -191,3 +191,16 @@
 - [x] TODO 100: 로컬·원격 브랜치가 master 하나인지 확인하고 후보별 가치와 위험을 비교한다.
 - [x] TODO 101: 명시적으로 남은 리스크인 다른 OS 검증을 다음 실험으로 선정한다.
 - [x] TODO 102: 다음 LOOP의 실험 브랜치 준비를 권고하되 이번 LOOP에서는 생성하지 않는다.
+
+## 40번째 LOOP — GitHub Actions 교차 운영체제 검증
+
+- 목표: GitHub Actions에서 동일한 `npm run verify`를 Windows, Ubuntu, macOS에서 실행한다.
+- 실험 범위: `.github/workflows/cross-platform-verify.yml`과 LOOP 문서에 한정하며, 확인된 OS 문제가 없으면 애플리케이션 소스와 테스트를 변경하지 않는다.
+- 예상 위험: Windows `ComSpec` 분기, Unix의 npm 직접 실행, 경로·대소문자·줄바꿈·인코딩·임시 디렉터리 차이, 최소 지원 Node 버전의 Actions 실행 가능성.
+- 품질 게이트: 변경 전후 로컬 `npm run verify` 9개 PASS와 원격 matrix의 Windows·Ubuntu·macOS 전체 PASS.
+- 완료 조건: 예상 파일만 변경, 로컬 검증 통과, 실험 브랜치 일반 push, 원격 workflow 실행 확인과 OS별 결과 보고.
+- [x] TODO 103: 동기화된 clean master와 기준 9개 품질 게이트를 확인하고 실험 브랜치를 생성한다.
+- [x] TODO 104: 검증 스크립트의 셸·경로·대소문자·줄바꿈·인코딩·임시 경로·Node 버전 위험을 조사한다.
+- [x] TODO 105: 세 OS와 Node.js 14.14.0 matrix에서 `npm run verify`를 실행하는 workflow를 작성한다.
+- [ ] TODO 106: 로컬 검증, 커밋·push와 GitHub Actions OS별 결과 확인을 완료한다.
+- master 병합: 이번 LOOP에서는 수행하지 않는다.
