@@ -586,3 +586,29 @@
 - push 후 동기화: HEAD, `origin/master`, 원격 master가 `2975adc646d4c4e7cf4e2eab9f17c347aeff2247`로 일치함.
 - 실험 브랜치 삭제: 수행하지 않음.
 - force push와 `git branch -D`: 사용하지 않음.
+
+## 42번째 LOOP — Autonomous LOOP Runner v1 구축
+
+- 목적: 사람의 중간 확인 없이 제한된 시간과 반복 횟수 안에서 작은 코드 품질 개선을 수행하는 Autonomous LOOP Runner v1 구축.
+- 시작 안전 점검: `master`, `origin/master`, 원격 master가 `adcf840`으로 일치하고 작업 트리 clean, `npm run verify` 9개 검증 모두 PASS.
+- 작업 브랜치: master에서 로컬 전용 `autonomy/loop-runner-v1`을 생성했으며 master는 시작 커밋 `adcf840`을 그대로 유지함.
+- 공통 규약: `AGENTS.md`에 `autonomy/*` 전용 실행, 작은 변경, 테스트 우선, verify·review 게이트, 허용 파일 범위와 금지 Git 명령을 정의함.
+- 장기 목표: `AUTONOMOUS_GOAL.md`에 기존 CLI 의미를 유지하면서 신뢰성·유지보수성을 개선하는 우선순위, 완료 기준과 중단 경계를 정의함.
+- Runner: `scripts/run-autonomous-loop.ps1`을 작성함. 기본·최대 10회, 기본·최대 120분, 연속 실패 기본 3회, 연속 무진전 기본 2회를 적용함.
+- 반복 순서: `codex exec` 분석 → 테스트 작성 → 구현 → `npm run verify` → 별도 `codex review --uncommitted` → 필요 시 수정·재검증·재review → 로컬 commit → JSONL 기록.
+- Codex 안전 설정: 모든 agent 실행에 `--sandbox workspace-write`와 `-c approval_policy="never"`를 명시함. `--yolo`와 approval·sandbox 우회 옵션은 규약과 Runner에서 허용하지 않음.
+- Git 안전 경계: 시작 시 `autonomy/*`와 clean 상태를 강제하고, agent의 commit을 금지하며 Runner만 허용 범위 검증 후 로컬 commit함. master 병합·push, 모든 원격 push, 브랜치 삭제는 구현하거나 실행하지 않음.
+- 변경 범위 게이트: `app.js`, 테스트·검증 파일, fixture, README/HANDOFF와 의존성 변경 없는 package metadata만 품질 변경 대상으로 허용함. Runner 제어 파일, LOOP 문서와 실행 산출물은 agent 수정 대상에서 제외함.
+- 시간 제한: 각 외부 프로세스를 남은 전체 시간 안에서 실행하고 deadline 도달 시 프로세스 트리를 종료한 뒤 시간 제한 결과로 보고함.
+- 기록 보존: 반복별 명령 로그·분석·review, `iterations.jsonl`, `final-report.json`, `final-report.md`를 `.autonomous-loop/runs/<run-id>`에 보존함. `.gitignore`에 runtime root를 추가함.
+- 경로 안전성: 독립 review에서 실행 로그 경로를 외부로 지정할 수 있는 위험을 발견함. RunRoot 설정을 제거하고 저장 위치를 저장소 내부로 고정했으며 `.autonomous-loop`와 `runs`의 reparse point도 거부하도록 최소 수정함.
+- review 호환성: 현재 Codex CLI가 `review --uncommitted`와 사용자 prompt 동시 사용을 거부함을 확인하여, `AGENTS.md`의 review 계약과 기본 `codex review --uncommitted`를 사용하도록 구성함. review 판정은 stderr의 규약 텍스트가 오인되지 않도록 stdout만 검사함.
+- smoke test 1: `ProgressThenNoProgress` 시나리오가 1회 진전 후 연속 무진전 2회를 감지하여 총 3회에서 `no_progress_limit`으로 정상 종료하고 로그·최종 보고서를 생성함.
+- smoke test 2: `ConsecutiveFailures` 시나리오가 연속 실패 2회를 감지하여 총 2회에서 `consecutive_failure_limit`으로 정상 종료하고 로그·최종 보고서를 생성함.
+- smoke 격리: smoke mode는 실제 Codex 호출·소스 수정·commit 없이 harmless native command와 상태 머신·기록 경로를 검증함.
+- 독립 review: 수정 후 `codex review --uncommitted`를 다시 수행했으며 추가로 보고할 correctness issue가 없음을 확인함.
+- 최종 로컬 검증: PowerShell 구문 검사, 두 smoke test, `git diff --check`와 `npm run verify` 9개 검증 PASS를 품질 게이트로 사용함.
+- 변경 파일: `.gitignore`, `AGENTS.md`, `AUTONOMOUS_GOAL.md`, `scripts/run-autonomous-loop.ps1`, `LOOP_PLAN.md`, `LOOP_LOG.md`.
+- 소스 기능: 변경하지 않음. 새 기능·의존성·검증 완화도 추가하지 않음.
+- 원격 작업: push하지 않음. master 병합, 실험 브랜치 삭제, force push, `git branch -D`, rebase, amend, hard reset, clean 및 yolo를 사용하지 않음.
+- 결론: 제한된 권한·범위·시간과 독립 품질 게이트, 감사 가능한 실행 기록을 갖춘 Autonomous LOOP Runner v1이 로컬 전용 autonomy 브랜치에 준비됨.

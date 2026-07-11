@@ -214,3 +214,16 @@
 - [x] TODO 110: 병합 후 master의 9개 품질 게이트를 통과하고 결과를 문서화한다.
 - [x] TODO 111: LOOP 41 문서 커밋과 master 일반 push 후 원격 동기화를 확인한다.
 - 실험 브랜치 삭제: 이번 LOOP에서는 수행하지 않는다.
+
+## 42번째 LOOP — Autonomous LOOP Runner v1 구축
+
+- 목표: 사람의 중간 확인 없이 최대 10회 또는 120분 동안 제한된 코드 품질 개선을 반복하는 Windows PowerShell Runner를 구축한다.
+- 실행 범위: 전용 `autonomy/*` 브랜치의 로컬 작업만 허용하며 master 병합·push, 모든 원격 push, 브랜치 삭제를 금지한다.
+- 품질 게이트: 각 반복은 분석 → 테스트 → 구현 → `npm run verify` → 독립 `codex review` → 필요 시 수정·재검증 → 로컬 commit → 기록 순서를 따른다.
+- 종료 조건: 최대 반복 수, 전체 시간, 연속 실패, 연속 무진전 중 먼저 충족되는 조건으로 종료하고 최종 보고서를 보존한다.
+- [x] TODO 112: 동기화된 clean master와 9개 품질 게이트를 확인하고 로컬 전용 `autonomy/loop-runner-v1` 브랜치를 생성한다.
+- [x] TODO 113: `AGENTS.md` 공통 안전 규약과 `AUTONOMOUS_GOAL.md` 장기 품질 목표·허용 범위를 정의한다.
+- [x] TODO 114: `workspace-write`, `approval_policy=never`의 `codex exec`·`codex review` 단계와 종료 상태 머신을 PowerShell Runner로 구현한다.
+- [x] TODO 115: 반복별 로그, JSONL 기록, 최종 JSON·Markdown 보고서를 `.autonomous-loop/runs`에 보존하고 Git에서 제외한다.
+- [x] TODO 116: 무진전 종료와 연속 실패 종료의 두 smoke test, 구문 검사, 독립 review와 로컬 9개 품질 게이트를 통과한다.
+- master 병합·원격 push·브랜치 삭제: 이번 LOOP에서는 수행하지 않는다.
