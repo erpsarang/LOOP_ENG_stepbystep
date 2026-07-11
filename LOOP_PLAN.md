@@ -78,3 +78,9 @@
 - [x] TODO 38: `master`와 clean 작업 트리를 확인하고 `npm run verify`를 실행한다.
 - [x] TODO 39: `experiment/summary-option`의 master 병합 상태를 확인하고 `git branch -d experiment/summary-option`으로 안전하게 삭제한다.
 - [x] TODO 40: 로컬 브랜치 부재와 GitHub 미푸시 상태를 확인하고 결과를 기록한다.
+
+## 23번째 LOOP — GitHub push 전 최종 로컬 감사
+
+- [x] TODO 41: 프로젝트 경로, `master` 브랜치와 clean 작업 트리를 확인한다.
+- [x] TODO 42: 품질 게이트, 삭제 브랜치 부재, 최근 커밋 이력과 로컬 브랜치 목록을 감사한다.
+- [x] TODO 43: 원격 저장소 설정과 GitHub 미푸시 상태를 확인하고 향후 push 준비 상태를 기록한다.
