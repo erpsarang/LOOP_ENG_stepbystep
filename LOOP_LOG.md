@@ -349,3 +349,22 @@
 - 빈 CSV 입력은 기존 오류 계약을 유지하고 CSV 헤더를 출력하지 않아야 함.
 - 이번 LOOP에서는 소스 코드를 수정하지 않았으며 구현은 다음 LOOP에서 수행함.
 - force push: 사용하지 않음. 문서 커밋은 일반 `git push`로만 반영함.
+
+## 30번째 LOOP — CSV 출력 기능 구현
+
+- 목적: CSV 출력 기능 구현.
+- 현재 브랜치: `experiment/csv-output`.
+- 작업 트리 시작 상태: clean, `origin/experiment/csv-output` 추적.
+- 구현 전 `npm run verify`: 성공, 종료 코드 0, 기존 7개 검증 모두 PASS.
+- 변경한 주요 파일: `app.js`, `test.js`, `verify.js`, `README.md`, `HANDOFF.md`, `LOOP_PLAN.md`, `LOOP_LOG.md`.
+- 구현 옵션: `--csv`를 인자 파싱, 도움말과 출력 분기에 추가함.
+- CSV 출력: 헤더 `total,errorCount,warningCount`와 합계·오류 수·경고 수의 단일 데이터 행을 stdout에 출력함.
+- 이스케이프: `escapeCsvValue`가 콤마, 큰따옴표, CR 또는 LF가 있는 값을 큰따옴표로 감싸고 내부 큰따옴표를 두 번 쓰도록 구현함.
+- 기존 출력 보존: 옵션 없는 기본 출력, `--json`, `--summary`의 포맷과 오류 계약을 변경하지 않음.
+- summary 관계: LOOP 30 요구사항에 따라 LOOP 29의 상호 배타 초안을 조정해 `--summary --csv` 조합을 허용하고 CSV 출력을 우선함. `--json --csv`는 충돌 오류를 반환함.
+- 테스트 보강: CSV 포맷터와 이스케이퍼의 일반 값·콤마·큰따옴표·줄바꿈을 단위 검증하고, fixture 기반 CSV 출력, 경고 수와 stderr 비혼합, `--summary --csv` 인자 조합을 검증함.
+- 품질 게이트 보강: `fixtures/invalid-amount.csv --summary --csv` 실제 CLI 검증을 추가해 정확한 헤더, 데이터 행과 빈 stderr를 확인함.
+- 구현 후 `npm run verify`: 성공, 종료 코드 0, 8개 검증 모두 PASS.
+- 직접 실행: `node app.js --csv`와 `node app.js --summary --csv` 모두 헤더와 `18000,2,2` 데이터 행을 출력하고 종료 코드 0을 반환함.
+- 일반 push: 기능 커밋 후 `origin/experiment/csv-output`에 일반 `git push` 예정.
+- force push: 사용하지 않음.

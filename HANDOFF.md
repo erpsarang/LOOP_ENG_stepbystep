@@ -2,7 +2,7 @@
 
 ## 프로젝트 목적
 
-이 프로젝트는 CSV 파일의 `amount` 컬럼에서 유효한 숫자를 합산하는 작은 Node.js CLI입니다. 빈 값과 숫자가 아닌 값은 합계에서 제외하고 오류 행으로 집계합니다. 사람이 읽는 출력과 자동화용 JSON 출력을 지원하며 외부 npm 패키지는 사용하지 않습니다.
+이 프로젝트는 CSV 파일의 `amount` 컬럼에서 유효한 숫자를 합산하는 작은 Node.js CLI입니다. 빈 값과 숫자가 아닌 값은 합계에서 제외하고 오류 행으로 집계합니다. 사람이 읽는 출력과 자동화용 JSON·CSV 요약 출력을 지원하며 외부 npm 패키지는 사용하지 않습니다.
 
 ## 주요 파일 구조
 
@@ -24,6 +24,8 @@
 node app.js input.csv
 node app.js input.csv --json
 node app.js input.csv --summary
+node app.js input.csv --csv
+node app.js input.csv --summary --csv
 node app.js --help
 ```
 
@@ -35,7 +37,7 @@ node app.js --help
 npm test
 ```
 
-테스트는 파싱, 공백·소수·음수, BOM, 경고, JSON, 인자 처리, 파일 누락과 컬럼 누락을 검증합니다.
+테스트는 파싱, 공백·소수·음수, BOM, 경고, JSON·summary·CSV 출력, CSV 이스케이프, 인자 처리, 파일 누락과 컬럼 누락을 검증합니다.
 
 ## 품질 게이트 실행 방법
 
@@ -45,7 +47,7 @@ npm test
 npm run verify
 ```
 
-품질 게이트는 테스트, 정상 fixture 일반 출력, 잘못된 금액 fixture의 JSON·summary 출력, 누락 파일, `amount` 컬럼 누락, 도움말을 확인합니다. 모든 항목이 통과해야 종료 코드 `0`을 반환합니다. 누락 파일과 컬럼 누락의 코드 `1`은 예상 결과로 판정합니다.
+품질 게이트는 테스트, 정상 fixture 일반 출력, 잘못된 금액 fixture의 JSON·summary·CSV 출력, `--summary --csv` 조합, 누락 파일, `amount` 컬럼 누락, 도움말을 확인합니다. 모든 항목이 통과해야 종료 코드 `0`을 반환합니다. 누락 파일과 컬럼 누락의 코드 `1`은 예상 결과로 판정합니다.
 
 ## fixture 데이터
 

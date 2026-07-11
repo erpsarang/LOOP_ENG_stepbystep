@@ -83,6 +83,23 @@ const checks = [
     },
   },
   {
+    name: 'CSV CLI 출력과 summary 조합',
+    displayCommand: `node app.js ${FIXTURES.invalidAmount.path} --summary --csv`,
+    fixture: FIXTURES.invalidAmount.path,
+    command: nodeCommand,
+    args: ['app.js', FIXTURES.invalidAmount.path, '--summary', '--csv'],
+    expectedStatus: FIXTURES.invalidAmount.expectedStatus,
+    validate: ({ stdout, stderr }) => {
+      const expected = [
+        'total,errorCount,warningCount',
+        `${FIXTURES.invalidAmount.total},${FIXTURES.invalidAmount.errorCount},${FIXTURES.invalidAmount.warningCount}`,
+      ].join('\n');
+      return stdout.trim() === expected && stderr.trim() === ''
+        ? null
+        : 'CSV 헤더·데이터 행 또는 stderr가 예상과 다릅니다.';
+    },
+  },
+  {
     name: 'amount 컬럼 누락 오류',
     displayCommand: `node app.js ${FIXTURES.missingAmountColumn.path}`,
     fixture: FIXTURES.missingAmountColumn.path,
@@ -99,7 +116,7 @@ const checks = [
     command: nodeCommand,
     args: ['app.js', '--help'],
     expectedStatus: 0,
-    validate: ({ stdout }) => stdout.includes('사용법: node app.js [CSV 파일] [--json | --summary]')
+    validate: ({ stdout }) => stdout.includes('사용법: node app.js [CSV 파일] [--json | --summary | --csv]')
       ? null
       : '도움말 사용법을 찾을 수 없습니다.',
   },
