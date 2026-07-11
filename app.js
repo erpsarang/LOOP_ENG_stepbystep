@@ -174,7 +174,7 @@ function parseCliArgs(args) {
     throw new Error('CSV 파일은 하나만 지정할 수 있습니다.');
   }
 
-  if (args.includes('--json') && args.includes('--summary')) {
+  if (args.includes('--json') && args.includes('--summary') && !args.includes('--csv')) {
     throw new Error('--json과 --summary는 함께 사용할 수 없습니다.');
   }
 

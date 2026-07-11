@@ -179,6 +179,20 @@ assert.deepStrictEqual(jsonCsvCapture.messages.logs, [
 assert.deepStrictEqual(jsonCsvCapture.messages.warnings, []);
 assert.deepStrictEqual(jsonCsvCapture.messages.errors, []);
 
+const allOutputFormatsCapture = captureOutput();
+assert.strictEqual(
+  executeArgs(
+    [invalidAmountFixturePath, '--json', '--summary', '--csv'],
+    allOutputFormatsCapture.output,
+  ),
+  0,
+);
+assert.deepStrictEqual(allOutputFormatsCapture.messages.logs, [
+  `total,errorCount,warningCount\n${FIXTURES.invalidAmount.total},${FIXTURES.invalidAmount.errorCount},${FIXTURES.invalidAmount.warningCount}`,
+]);
+assert.deepStrictEqual(allOutputFormatsCapture.messages.warnings, []);
+assert.deepStrictEqual(allOutputFormatsCapture.messages.errors, []);
+
 const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'csv-amount-test-'));
 try {
   const otherCapture = captureOutput();
