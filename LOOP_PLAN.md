@@ -204,3 +204,13 @@
 - [x] TODO 105: 세 OS와 동일한 Node.js 22.17.0 matrix에서 `npm run verify`를 실행하는 workflow를 작성한다.
 - [x] TODO 106: 로컬 검증, 커밋·push와 GitHub Actions OS별 결과 확인을 완료한다.
 - master 병합: 이번 LOOP에서는 수행하지 않는다.
+
+## 41번째 LOOP — 교차 운영체제 검증 workflow master 병합
+
+- 목표: 성공한 `experiment/cross-platform-verify`를 master에 `--no-ff`로 병합하고 검증 후 일반 push한다.
+- [x] TODO 107: 최신 실험 커밋의 Windows·Ubuntu·macOS Actions와 quality gate PASS를 재확인한다.
+- [x] TODO 108: 실험 브랜치와 master에서 병합 전 로컬 9개 품질 게이트를 통과한다.
+- [x] TODO 109: 실험 브랜치를 충돌 없이 `--no-ff` merge commit으로 master에 병합한다.
+- [x] TODO 110: 병합 후 master의 9개 품질 게이트를 통과하고 결과를 문서화한다.
+- [ ] TODO 111: LOOP 41 문서 커밋과 master 일반 push 후 원격 동기화를 확인한다.
+- 실험 브랜치 삭제: 이번 LOOP에서는 수행하지 않는다.
