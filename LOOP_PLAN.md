@@ -163,3 +163,10 @@
 - [x] TODO 84: `origin/master..master`의 예상 8개 커밋을 검토하고 일반 push한다.
 - [x] TODO 85: push 후 HEAD, `origin/master`, 원격 master 해시 일치를 확인한다.
 - [x] TODO 86: push 결과를 문서 커밋으로 기록하고 일반 push로 최종 반영한다.
+
+## 36번째 LOOP — 병합 후 원격 동기화 감사 및 브랜치 정리 판단
+
+- [x] TODO 87: clean master에서 9개 품질 게이트와 master 세 해시 일치를 확인한다.
+- [x] TODO 88: `experiment/csv-output`의 master 병합 완료 상태를 확인한다.
+- [x] TODO 89: 로컬·원격 실험 브랜치가 모두 존재함을 확인하고 삭제 권고 여부를 판단한다.
+- [x] TODO 90: 최종 감사 결과를 기록하되 실험 브랜치는 실제 삭제하지 않는다.

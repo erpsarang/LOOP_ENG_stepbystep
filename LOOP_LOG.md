@@ -461,3 +461,18 @@
 - push 후 해시: HEAD, `origin/master`, 원격 `refs/heads/master`가 모두 `8c5490a75a7b5d4d236b859e92b40b1675d4d0cb`로 일치함.
 - force push: 사용하지 않음.
 - 결론: CSV 기능과 병합 결과가 GitHub master에 반영됨.
+
+## 36번째 LOOP — 병합 후 원격 동기화 감사 및 브랜치 정리 판단
+
+- 목적: 병합 후 원격 동기화 감사 및 브랜치 정리 판단.
+- 현재 브랜치: `master`.
+- 작업 트리 상태: 문서 수정 전 clean.
+- `npm run verify`: 성공, 종료 코드 0, 9개 검증 모두 PASS.
+- master 동기화: HEAD, `origin/master`, 원격 `refs/heads/master`가 모두 `508bb6f44c2218641b378f7727ae389c3b6f2bf2`로 일치함.
+- 실험 브랜치 병합: `git branch --merged master`에 `experiment/csv-output`이 포함되고 merge commit `67abe98` 아래에 전체 이력이 보존됨.
+- 로컬 실험 브랜치: `experiment/csv-output`이 `c924fca`를 가리키며 존재함.
+- 원격 실험 브랜치: `refs/heads/experiment/csv-output`이 `c924fca`를 가리키며 존재함.
+- 브랜치 정리 판단: **delete recommended**. master 병합, GitHub master 반영, 원격 동기화와 품질 게이트 통과가 모두 확인되어 별도 브랜치 유지가 필수적이지 않음.
+- 실제 브랜치 삭제: 수행하지 않음. 로컬과 원격 실험 브랜치를 모두 보존함.
+- force push: 사용하지 않음.
+- 최종 결론: CSV 기능은 검증된 상태로 GitHub master에 완전히 반영됐으며, 후속 승인 범위에서 실험 브랜치 정리를 진행할 수 있음.
