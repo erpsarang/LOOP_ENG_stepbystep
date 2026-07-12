@@ -10,6 +10,7 @@ function parseCsv(text) {
   let fieldStarted = false;
   let rowHasQuotedField = false;
   let quoted = false;
+  let quotedFieldClosed = false;
 
   for (let i = 0; i < normalizedText.length; i += 1) {
     const char = normalizedText[i];
@@ -20,9 +21,12 @@ function parseCsv(text) {
         i += 1;
       } else if (char === '"') {
         quoted = false;
+        quotedFieldClosed = true;
       } else {
         field += char;
       }
+    } else if (quotedFieldClosed && char !== ',' && char !== '\n' && char !== '\r') {
+      throw new Error('CSV의 따옴표 형식이 올바르지 않습니다.');
     } else if (char === '"') {
       fieldStarted = true;
       rowHasQuotedField = true;
@@ -31,6 +35,7 @@ function parseCsv(text) {
       row.push(field);
       field = '';
       fieldStarted = false;
+      quotedFieldClosed = false;
     } else if (char === '\n' || char === '\r') {
       row.push(field);
       if (rowHasQuotedField) rowsWithQuotedFields.add(row);
@@ -39,6 +44,7 @@ function parseCsv(text) {
       field = '';
       fieldStarted = false;
       rowHasQuotedField = false;
+      quotedFieldClosed = false;
       if (char === '\r' && normalizedText[i + 1] === '\n') {
         i += 1;
       }
