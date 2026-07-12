@@ -39,6 +39,16 @@ assert.deepStrictEqual(parseCsv('item,amount\r\n"A, large",10\r\n'), [
   ['item', 'amount'],
   ['A, large', '10'],
 ]);
+assert.deepStrictEqual(parseCsv('item,amount\n"A ""quoted"" item",10\n'), [
+  ['item', 'amount'],
+  ['A "quoted" item', '10'],
+]);
+const quotedCrLfCsv = 'item,description,amount\r\nA,"first line\r\nsecond line",10\r\n';
+assert.deepStrictEqual(parseCsv(quotedCrLfCsv), [
+  ['item', 'description', 'amount'],
+  ['A', 'first line\r\nsecond line', '10'],
+]);
+assert.deepStrictEqual(sumAmount(quotedCrLfCsv), { total: 10, errorCount: 0 });
 assert.throws(() => parseCsv('item,amount\n"A,10\n'), /따옴표가 닫히지 않았습니다/);
 assert.deepStrictEqual(parseCsv('\uFEFFitem,amount\nA,10\n'), [
   ['item', 'amount'],
@@ -71,6 +81,15 @@ assert.deepStrictEqual(
 );
 assert.deepStrictEqual(blankLineWarnings, [
   '경고: 4행의 amount 값이 올바른 숫자가 아닙니다: invalid',
+]);
+
+const quotedEmptyAmountWarnings = [];
+assert.deepStrictEqual(
+  sumAmount('amount\n""', (message) => quotedEmptyAmountWarnings.push(message)),
+  { total: 0, errorCount: 1 },
+);
+assert.deepStrictEqual(quotedEmptyAmountWarnings, [
+  '경고: 2행의 amount 값이 올바른 숫자가 아닙니다: (빈 값)',
 ]);
 
 assert.strictEqual(
@@ -124,6 +143,7 @@ assert.strictEqual(executeArgs(['--unknown'], invalidOptionCapture.output), 1);
 assert.deepStrictEqual(invalidOptionCapture.messages.errors, ['오류: 알 수 없는 옵션입니다: --unknown']);
 
 assert.deepStrictEqual(sumAmount('item,amount\n"A, large",10\nB,-3\n'), { total: 7, errorCount: 0 });
+assert.deepStrictEqual(sumAmount('item,amount\rA,10\rB,20\r'), { total: 30, errorCount: 0 });
 assert.deepStrictEqual(sumAmount('item,amount\nA, 1000 \n'), { total: 1000, errorCount: 0 });
 assert.deepStrictEqual(sumAmount('item,amount\nA,1000.5\n'), { total: 1000.5, errorCount: 0 });
 assert.deepStrictEqual(sumAmount('item,amount\nA,-500\n'), { total: -500, errorCount: 0 });
@@ -177,6 +197,20 @@ assert.deepStrictEqual(jsonCsvCapture.messages.logs, [
 ]);
 assert.deepStrictEqual(jsonCsvCapture.messages.warnings, []);
 assert.deepStrictEqual(jsonCsvCapture.messages.errors, []);
+
+const allOutputFormatsCapture = captureOutput();
+assert.strictEqual(
+  executeArgs(
+    [invalidAmountFixturePath, '--json', '--summary', '--csv'],
+    allOutputFormatsCapture.output,
+  ),
+  0,
+);
+assert.deepStrictEqual(allOutputFormatsCapture.messages.logs, [
+  `total,errorCount,warningCount\n${FIXTURES.invalidAmount.total},${FIXTURES.invalidAmount.errorCount},${FIXTURES.invalidAmount.warningCount}`,
+]);
+assert.deepStrictEqual(allOutputFormatsCapture.messages.warnings, []);
+assert.deepStrictEqual(allOutputFormatsCapture.messages.errors, []);
 
 const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'csv-amount-test-'));
 try {

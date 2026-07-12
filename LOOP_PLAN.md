@@ -214,3 +214,87 @@
 - [x] TODO 110: 병합 후 master의 9개 품질 게이트를 통과하고 결과를 문서화한다.
 - [x] TODO 111: LOOP 41 문서 커밋과 master 일반 push 후 원격 동기화를 확인한다.
 - 실험 브랜치 삭제: 이번 LOOP에서는 수행하지 않는다.
+
+## 42번째 LOOP — Autonomous LOOP Runner v1 구축
+
+- 목표: 사람의 중간 확인 없이 최대 10회 또는 120분 동안 제한된 코드 품질 개선을 반복하는 Windows PowerShell Runner를 구축한다.
+- 실행 범위: 전용 `autonomy/*` 브랜치의 로컬 작업만 허용하며 master 병합·push, 모든 원격 push, 브랜치 삭제를 금지한다.
+- 품질 게이트: 각 반복은 분석 → 테스트 → 구현 → `npm run verify` → 독립 `codex review` → 필요 시 수정·재검증 → 로컬 commit → 기록 순서를 따른다.
+- 종료 조건: 최대 반복 수, 전체 시간, 연속 실패, 연속 무진전 중 먼저 충족되는 조건으로 종료하고 최종 보고서를 보존한다.
+- [x] TODO 112: 동기화된 clean master와 9개 품질 게이트를 확인하고 로컬 전용 `autonomy/loop-runner-v1` 브랜치를 생성한다.
+- [x] TODO 113: `AGENTS.md` 공통 안전 규약과 `AUTONOMOUS_GOAL.md` 장기 품질 목표·허용 범위를 정의한다.
+- [x] TODO 114: `workspace-write`, `approval_policy=never`의 `codex exec`·`codex review` 단계와 종료 상태 머신을 PowerShell Runner로 구현한다.
+- [x] TODO 115: 반복별 로그, JSONL 기록, 최종 JSON·Markdown 보고서를 `.autonomous-loop/runs`에 보존하고 Git에서 제외한다.
+- [x] TODO 116: 무진전 종료와 연속 실패 종료의 두 smoke test, 구문 검사, 독립 review와 로컬 9개 품질 게이트를 통과한다.
+- master 병합·원격 push·브랜치 삭제: 이번 LOOP에서는 수행하지 않는다.
+
+## 43번째 LOOP — 실패 실행 복구 및 Autonomous LOOP Runner v1.1
+
+- 목표: 실패 실행의 안전한 변경은 완성하고, 향후 반복 실패가 작업 트리를 오염시키지 않도록 체크포인트 복구와 과제 skip을 구현한다.
+- [x] TODO 117: 실패 보고서와 iteration 로그, `test.js:183`, 작업 트리 diff를 분석한다.
+- [x] TODO 118: CSV 우선순위 변경을 최소 완성하고 `npm test`와 9개 `npm run verify`를 통과한다.
+- [x] TODO 119: 실행·반복 체크포인트, 실패 시 HEAD·index·worktree·untracked 복구와 실패 과제 skip을 구현한다.
+- [x] TODO 120: 복구 성공 실패를 분리하고, 복구 불가능한 연속 실패에만 중단 한도를 적용한다.
+- [x] TODO 121: Node.js v22.17.0 사전 점검과 실패·복구·skip 정보를 포함한 최종 보고서를 구현한다.
+- [x] TODO 122: PowerShell 구문, 두 Runner smoke test, 9개 verify와 반복 독립 review를 통과한다.
+- master 병합·원격 push·브랜치 삭제: 이번 LOOP에서는 수행하지 않는다.
+
+## 44번째 LOOP — Autonomous LOOP Runner Node 사전 점검 현실화
+
+- 목표: 로컬 Autonomous LOOP Runner의 Node 사전 점검을 현실적으로 조정해 Node.js 22.x 또는 24.x LTS에서 시작 가능하게 만들고, GitHub Actions의 22.17.0 고정은 유지한다.
+- 실행 범위: `scripts/run-autonomous-loop.ps1`과 LOOP 문서에 한정한다. master 병합, 원격 push, 브랜치 삭제, workflow 변경은 이번 LOOP에서 수행하지 않는다.
+- 예상 위험: Node 버전 판정이 너무 느슨해지거나 너무 엄격해져 Runner 시작이 막히는 문제, 실패 시 보고서 메시지의 모호성, smoke test 또는 `npm run verify` 회귀.
+- 품질 게이트: 수정 후 `npm run verify` 9개 PASS, Runner smoke test 2종 PASS, current Node v24.18.0에서 Runner preflight 통과, 다른 버전은 명확한 오류와 보고서를 남기고 중단.
+- 완료 조건: 허용 Node 범위와 실패 메시지가 코드에 반영되고, 검증과 smoke test가 모두 통과하며, 문서가 현재 정책을 설명한다.
+- [x] TODO 123: 현재 브랜치, clean 상태, HEAD와 master의 분리, 현재 Node 버전과 기존 runner 정책을 확인한다.
+- [x] TODO 124: Node preflight를 22.x 또는 24.x LTS 허용으로 조정하고, GitHub Actions의 22.17.0 고정은 유지한다.
+- [x] TODO 125: `npm run verify`와 두 Runner smoke test를 다시 실행해 수정이 회귀를 만들지 확인한다.
+- [x] TODO 126: LOOP 44 결과와 새 Node 정책을 LOOP 문서에 기록하고, master 병합·원격 push 없이 마무리한다.
+
+## 45번째 LOOP — Autonomous Runner Node 정책 문서 정합성
+
+- 목표: Runner가 허용하는 Node.js 22.x 또는 24.x LTS 정책과 `AGENTS.md`의 자율 실행 규칙을 일치시킨다.
+- 발견한 충돌: Runner는 LOOP 44부터 Node.js 22.x 또는 24.x를 허용하지만 `AGENTS.md`는 정확히 `v22.17.0`만 허용해 현재 로컬 Node.js v24.18.0과 모순됐다.
+- 실행 범위: `AGENTS.md`와 LOOP 문서만 최소 수정하며 Runner 동작, GitHub Actions의 22.17.0 고정, 과거 LOOP 기록은 변경하지 않는다.
+- 품질 게이트: `npm run verify` 9개 PASS와 `ProgressThenNoProgress`, `ConsecutiveFailures` Runner smoke test PASS.
+- [x] TODO 127: 지정 문서와 Runner 구현을 확인해 현재 정책과 오래된 제한의 범위를 판별한다.
+- [x] TODO 128: `AGENTS.md`의 Node 규칙을 Node.js 22.x 또는 24.x LTS 허용으로 최소 수정한다.
+- [x] TODO 129: `npm run verify`와 두 Runner smoke test를 실행해 회귀가 없음을 확인한다.
+- [x] TODO 130: 실제 변경 파일과 검증 결과를 LOOP 문서에 기록하고 관련 파일만 로컬 커밋한다.
+
+## 46번째 LOOP — Autonomous Runner GoalPath 프롬프트 적용
+
+- 목표: `-GoalPath`로 선택한 목표 파일을 analysis, test, implementation, correction 단계의 모든 Codex 프롬프트에 적용한다.
+- 실행 범위: `scripts/run-autonomous-loop.ps1`, `AGENTS.md`, LOOP 문서만 최소 수정하며 Runner의 권한, 허용 파일 목록, Git 정책, 반복·시간·복구 정책은 유지한다.
+- 품질 게이트: PowerShell 구문 검사, 하드코딩된 목표 파일 참조 감사, `ProgressThenNoProgress`, `ConsecutiveFailures` Smoke Test와 `npm run verify` PASS.
+- [x] TODO 131: clean autonomy 브랜치, Node.js 24 LTS와 기존 `GoalPath` 해석 및 프롬프트 하드코딩 원인을 확인한다.
+- [x] TODO 132: 네 단계 프롬프트가 Runner가 해석한 목표 경로를 사용하도록 수정하고 기본값을 유지한다.
+- [x] TODO 133: `AGENTS.md`의 목표 파일 읽기·편집 금지 규칙을 사용자 지정 `GoalPath`와 일치시킨다.
+- [x] TODO 134: 구문·정적 감사, 두 Smoke Test와 `npm run verify`를 통과하고 관련 파일만 로컬 커밋한다.
+
+## 47번째 LOOP — quoted CSV escaped double quote 회귀 테스트
+
+- 목표: 따옴표로 감싼 CSV 필드 내부의 escaped double quote(`""`) 처리에 직접적인 회귀 테스트를 추가한다.
+- 실행 범위: 자율 Runner `run-20260712-090836`의 iteration 1로 `test.js`만 수정하며 프로덕션 코드와 공개 CLI 동작은 변경하지 않는다.
+- [x] TODO 135: 기존 parser 테스트에 escaped double quote 분기의 직접 검증이 없음을 확인한다.
+- [x] TODO 136: `"A ""quoted"" item",10`이 `A "quoted" item`과 amount `10`으로 파싱되는지 검증한다.
+- [x] TODO 137: `npm run verify` 9개, `git diff --check`와 독립 리뷰를 통과하고 정상 로컬 커밋한다.
+
+## 48번째 LOOP — quoted CSV 내부 CRLF 회귀 테스트
+
+- 목표: 따옴표로 감싼 CSV 필드 내부의 CRLF 줄바꿈 보존과 후속 amount 합계 처리를 회귀 테스트로 보호한다.
+- 실행 범위: 자율 Runner `run-20260712-090836`의 iteration 2로 `test.js`만 수정하며 fixture와 프로덕션 코드는 변경하지 않는다.
+- [x] TODO 138: quoted field 내부 CRLF 보존과 `sumAmount` 동작에 직접적인 테스트가 없음을 확인한다.
+- [x] TODO 139: embedded CRLF가 포함된 레코드의 파싱 결과와 total `10`, errorCount `0`을 검증한다.
+- [x] TODO 140: `npm run verify` 9개, `git diff --check`와 독립 리뷰를 통과하고 정상 로컬 커밋한다.
+
+## 49번째 LOOP — Autonomous Runner UTF-8 출력 캡처
+
+- 목표: `Invoke-NativeLogged`가 리디렉션된 stdout과 stderr를 UTF-8로 명시적으로 디코딩해 한글 출력과 로그의 mojibake를 방지한다.
+- 실행 범위: `scripts/run-autonomous-loop.ps1`과 LOOP 문서만 수정하며, Console 인코딩·로그 저장·출력 병합·timeout·Git·반복·복구 정책은 유지한다.
+- 품질 게이트: UTF-8 stdout/stderr와 로그 보존을 검사하는 `Encoding` Smoke Test, 기존 두 Smoke Test, `npm run verify` 9개, PowerShell 구문 검사 및 `git diff --check` PASS.
+- [x] TODO 141: `ProcessStartInfo`의 stdout·stderr 기본 디코딩이 UTF-8 한글을 손상시키는 원인을 재현·확인한다.
+- [x] TODO 142: stdout과 stderr 양쪽에 `Standard*Encoding = UTF-8`을 최소 적용한다.
+- [x] TODO 143: `%TEMP%`에서 실제 `Invoke-NativeLogged` 경로를 통과하는 한글 출력 Encoding Smoke Test를 추가하고 자원을 정리한다.
+- [x] TODO 144: Encoding Smoke Test가 저장소 내부 빈 run 디렉터리를 남기지 않도록 artifact 초기화 전으로 이동한다.
+- [x] TODO 145: 독립 리뷰 `APPROVE WITH NOTES`, 세 Smoke Test, `npm run verify`와 `git diff --check`를 통과하고 관련 파일만 로컬 커밋한다.

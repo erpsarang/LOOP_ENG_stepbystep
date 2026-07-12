@@ -586,3 +586,134 @@
 - push 후 동기화: HEAD, `origin/master`, 원격 master가 `2975adc646d4c4e7cf4e2eab9f17c347aeff2247`로 일치함.
 - 실험 브랜치 삭제: 수행하지 않음.
 - force push와 `git branch -D`: 사용하지 않음.
+
+## 42번째 LOOP — Autonomous LOOP Runner v1 구축
+
+- 목적: 사람의 중간 확인 없이 제한된 시간과 반복 횟수 안에서 작은 코드 품질 개선을 수행하는 Autonomous LOOP Runner v1 구축.
+- 시작 안전 점검: `master`, `origin/master`, 원격 master가 `adcf840`으로 일치하고 작업 트리 clean, `npm run verify` 9개 검증 모두 PASS.
+- 작업 브랜치: master에서 로컬 전용 `autonomy/loop-runner-v1`을 생성했으며 master는 시작 커밋 `adcf840`을 그대로 유지함.
+- 공통 규약: `AGENTS.md`에 `autonomy/*` 전용 실행, 작은 변경, 테스트 우선, verify·review 게이트, 허용 파일 범위와 금지 Git 명령을 정의함.
+- 장기 목표: `AUTONOMOUS_GOAL.md`에 기존 CLI 의미를 유지하면서 신뢰성·유지보수성을 개선하는 우선순위, 완료 기준과 중단 경계를 정의함.
+- Runner: `scripts/run-autonomous-loop.ps1`을 작성함. 기본·최대 10회, 기본·최대 120분, 연속 실패 기본 3회, 연속 무진전 기본 2회를 적용함.
+- 반복 순서: `codex exec` 분석 → 테스트 작성 → 구현 → `npm run verify` → 별도 `codex review --uncommitted` → 필요 시 수정·재검증·재review → 로컬 commit → JSONL 기록.
+- Codex 안전 설정: 모든 agent 실행에 `--sandbox workspace-write`와 `-c approval_policy="never"`를 명시함. `--yolo`와 approval·sandbox 우회 옵션은 규약과 Runner에서 허용하지 않음.
+- Git 안전 경계: 시작 시 `autonomy/*`와 clean 상태를 강제하고, agent의 commit을 금지하며 Runner만 허용 범위 검증 후 로컬 commit함. master 병합·push, 모든 원격 push, 브랜치 삭제는 구현하거나 실행하지 않음.
+- 변경 범위 게이트: `app.js`, 테스트·검증 파일, fixture, README/HANDOFF와 의존성 변경 없는 package metadata만 품질 변경 대상으로 허용함. Runner 제어 파일, LOOP 문서와 실행 산출물은 agent 수정 대상에서 제외함.
+- 시간 제한: 각 외부 프로세스를 남은 전체 시간 안에서 실행하고 deadline 도달 시 프로세스 트리를 종료한 뒤 시간 제한 결과로 보고함.
+- 기록 보존: 반복별 명령 로그·분석·review, `iterations.jsonl`, `final-report.json`, `final-report.md`를 `.autonomous-loop/runs/<run-id>`에 보존함. `.gitignore`에 runtime root를 추가함.
+- 경로 안전성: 독립 review에서 실행 로그 경로를 외부로 지정할 수 있는 위험을 발견함. RunRoot 설정을 제거하고 저장 위치를 저장소 내부로 고정했으며 `.autonomous-loop`와 `runs`의 reparse point도 거부하도록 최소 수정함.
+- review 호환성: 현재 Codex CLI가 `review --uncommitted`와 사용자 prompt 동시 사용을 거부함을 확인하여, `AGENTS.md`의 review 계약과 기본 `codex review --uncommitted`를 사용하도록 구성함. review 판정은 stderr의 규약 텍스트가 오인되지 않도록 stdout만 검사함.
+- smoke test 1: `ProgressThenNoProgress` 시나리오가 1회 진전 후 연속 무진전 2회를 감지하여 총 3회에서 `no_progress_limit`으로 정상 종료하고 로그·최종 보고서를 생성함.
+- smoke test 2: `ConsecutiveFailures` 시나리오가 연속 실패 2회를 감지하여 총 2회에서 `consecutive_failure_limit`으로 정상 종료하고 로그·최종 보고서를 생성함.
+- smoke 격리: smoke mode는 실제 Codex 호출·소스 수정·commit 없이 harmless native command와 상태 머신·기록 경로를 검증함.
+- 독립 review: 수정 후 `codex review --uncommitted`를 다시 수행했으며 추가로 보고할 correctness issue가 없음을 확인함.
+- 최종 로컬 검증: PowerShell 구문 검사, 두 smoke test, `git diff --check`와 `npm run verify` 9개 검증 PASS를 품질 게이트로 사용함.
+- 변경 파일: `.gitignore`, `AGENTS.md`, `AUTONOMOUS_GOAL.md`, `scripts/run-autonomous-loop.ps1`, `LOOP_PLAN.md`, `LOOP_LOG.md`.
+- 소스 기능: 변경하지 않음. 새 기능·의존성·검증 완화도 추가하지 않음.
+- 원격 작업: push하지 않음. master 병합, 실험 브랜치 삭제, force push, `git branch -D`, rebase, amend, hard reset, clean 및 yolo를 사용하지 않음.
+- 결론: 제한된 권한·범위·시간과 독립 품질 게이트, 감사 가능한 실행 기록을 갖춘 Autonomous LOOP Runner v1이 로컬 전용 autonomy 브랜치에 준비됨.
+
+## 43번째 LOOP — 실패 실행 복구 및 Autonomous LOOP Runner v1.1
+
+- 목적: `run-20260712-005850` 실패 상태를 안전하게 해소하고 반복별 자동 복구가 가능한 Runner v1.1 구축.
+- 현재 브랜치: `autonomy/loop-runner-v1`; master 전환·병합·push 없이 로컬에서만 작업함.
+- 실패 실행: 4회 중 첫 반복은 `593f658`로 성공했고, 두 번째 반복은 review marker 미인식 후 미커밋 `app.js`·`test.js` 변경을 남김. 이후 두 반복은 dirty tree로 즉시 실패해 `consecutive_failure_limit`에 도달함.
+- `test.js:183` 원인: 새 회귀 테스트가 `--json --summary --csv`에서 CSV 우선과 종료 코드 0을 요구했지만, 기존 JSON·summary 충돌 검사가 CSV 우선 분기보다 먼저 종료 코드 1을 반환함.
+- 안전한 완성 판단: README에 이미 CSV가 다른 출력 옵션보다 우선한다고 정의되어 있어 새 요구사항이 아니라 기존 계약의 누락 조합임을 확인함.
+- 복구 변경: CSV가 없을 때만 기존 JSON·summary 충돌 오류를 유지하고 CSV가 있으면 기존 CSV 출력 분기로 진행하도록 guard 한 줄을 제한적으로 수정함. 회귀 테스트는 세 출력 옵션 조합의 종료 코드 0, CSV 헤더·단일 행과 stderr 부재를 확인함.
+- 복구 품질 게이트: `npm test`와 `npm run verify` 9개 모두 PASS. 복구 커밋은 `5b5912e fix: complete recovered csv precedence task`.
+- 시작 체크포인트: 실제 실행 시작 HEAD를 `start-checkpoint.txt`와 최종 JSON·Markdown 보고서에 저장함. 각 반복 시작 HEAD도 `checkpoint.txt`와 iteration record에 저장함.
+- 자동 복구: 실패 시 checkpoint가 현재 HEAD의 조상임을 확인하고, 예상 밖 로컬 commit은 `git reset --mixed`로 되돌린 뒤 `git restore --source=<checkpoint> --staged --worktree -- .`로 tracked 상태를 복원함. 저장소 내부 untracked 파일만 안전 경로 검사 후 제거하고 HEAD·clean 상태를 재확인함. `git reset --hard`와 `git clean`은 사용하지 않음.
+- 과제 skip: 분석 첫 줄의 `TASK: <specific improvement>` 계약으로 실패 과제를 식별하고, 복구 성공 후 skip 목록을 다음 분석 prompt와 최종 보고서에 전달함. 계약 누락 시 분석 본문 요약을 보존함.
+- 실패 한도: 복구 성공 실패는 `recovered-failure`로 기록하고 연속 실패를 증가시키지 않음. checkpoint 복구 자체가 실패한 `recovery-failure`만 연속 실패 한도에 포함함.
+- review 개선: 기본 `codex review --uncommitted` 결과를 별도 읽기 전용 역할의 `codex exec`가 마지막 marker로 분류함. classifier 전후 working tree의 tracked diff, staged diff와 untracked SHA-256 fingerprint가 같아야 함.
+- Node 기준: 자율 실행 전 Node.js가 정확히 `v22.17.0`인지 확인하고, 명령 부재 또는 버전 불일치 시 iteration 0의 `node_version_mismatch` 최종 보고서와 종료 코드 3을 남김. 설치·버전 변경은 수행하지 않음.
+- 현재 환경 사전 점검: 설치 버전 `v24.18.0`에서 실제 Runner를 호출해 source 변경 없이 종료 코드 3, checkpoint `4a95287`, 명확한 mismatch 원인과 JSON·Markdown 보고서 생성을 확인함.
+- 최종 보고: 실패 원인, checkpoint, 복구 여부, skipped task 목록을 JSON과 Markdown 모두에 기록함.
+- smoke test 1: 진전 후 연속 무진전이 `no_progress_limit`으로 종료되고 보고서가 생성됨.
+- smoke test 2: 복구된 실패 후 다음 과제로 진행하고, 복구 불가능 실패 2회만 `consecutive_failure_limit`으로 종료됨.
+- 독립 review: 총 네 차례 수행. HEAD 미복원, Node 명령 부재, marker 오분류, 불명확한 skip 식별, mismatch 종료 코드, classifier 오염 가능성을 순차 수정했고 최종 review는 functional regression 없음으로 판정함.
+- Runner 최종 검증: PowerShell 구문 PASS, 두 smoke PASS, `git diff --check` PASS, `npm run verify` 9개 PASS.
+- Runner v1.1 커밋: `4a95287 fix: make autonomous runner recover failed iterations`.
+- 원격 작업과 위험 명령: master 병합·push, 모든 원격 push, 브랜치 삭제, force push, `git branch -D`, rebase, amend, hard reset, clean 및 yolo를 사용하지 않음.
+- 결론: 실패 실행의 검증 가능한 변경은 완성됐고, 이후 실패 반복은 checkpoint로 clean 복구한 뒤 동일 과제를 건너뛰어 다음 후보를 계속 탐색할 수 있음.
+
+## 44번째 LOOP — Autonomous LOOP Runner Node 사전 점검 현실화
+
+- 목적: 로컬 Autonomous LOOP Runner의 Node 사전 점검을 현실적으로 조정해 Node.js 22.x 또는 24.x LTS에서 시작 가능하게 하고, GitHub Actions의 22.17.0 고정은 유지한다.
+- 시작 안전 점검: 현재 브랜치 `autonomy/loop-runner-v1`, `git status`는 clean에서 시작했고 master와 원격 master는 `adcf840`으로 유지됨. 현재 로컬 Node 버전은 `v24.18.0`.
+- 조사한 위험: Runner preflight가 정확히 `v22.17.0`만 허용해 로컬 v24.18.0에서 시작이 막힐 수 있었고, 실패 메시지는 node_version_mismatch 보고서로 남아야 했다. GitHub Actions workflow는 별도 정책이므로 변경하지 않았다.
+- 실제 변경 파일: `scripts/run-autonomous-loop.ps1`, `LOOP_PLAN.md`, `LOOP_LOG.md`.
+- Node 정책: 로컬 Runner preflight를 22.x 또는 24.x LTS 허용으로 조정했고, 그 외 버전은 명확한 오류 메시지와 `node_version_mismatch` 보고서로 중단하도록 유지했다.
+- 검증 결과: `npm run verify` 9개 모두 PASS.
+- smoke test 결과: `ProgressThenNoProgress`와 `ConsecutiveFailures` 두 Runner smoke test 모두 PASS.
+- 원격 검증: 이번 LOOP에서는 수행하지 않음. master 병합과 원격 push도 수행하지 않음.
+- 추가 확인: `git branch -D`와 force push는 사용하지 않았고, 소스 코드와 workflow는 변경하지 않았다.
+- 결론: 로컬 v24.18.0에서도 Runner가 시작 가능한 사전 점검으로 조정됐고, 비허용 버전은 계속해서 명확히 중단되는 정책을 확보했다.
+
+## 45번째 LOOP — Autonomous Runner Node 정책 문서 정합성
+
+- 목적: Runner의 실제 Node.js 사전 점검 정책과 `AGENTS.md`의 자율 실행 정책을 일치시킨다.
+- 시작 안전 점검: 현재 브랜치 `autonomy/loop-runner-v1`, 작업 트리 clean, 현재 Node.js `v24.18.0`을 확인했다.
+- 발견한 정책 충돌: `scripts/run-autonomous-loop.ps1`은 LOOP 44부터 정확한 semver 형식의 Node.js 22.x 또는 24.x를 허용하지만 `AGENTS.md`는 `v22.17.0`만 허용한다고 규정했다.
+- 정책 조사: `RUNNER_CHECKLIST.md`에는 특정 Node 버전 제한이 없었다. LOOP 43의 `v22.17.0` 문구와 GitHub Actions의 22.17.0 고정은 당시 정책과 별도 CI 정책의 기록이므로 변경하지 않았다.
+- 실제 변경 파일: `AGENTS.md`, `LOOP_PLAN.md`, `LOOP_LOG.md`.
+- 실제 변경: `AGENTS.md`의 오래된 단일 버전 규칙을 Node.js 22.x 또는 24.x LTS 허용으로 최소 수정했다. Runner 동작 자체는 변경하지 않았다.
+- 검증 결과: Node.js v24.18.0에서 `npm run verify` 9개 모두 PASS.
+- smoke test 결과: `ProgressThenNoProgress`는 `no_progress_limit`, `ConsecutiveFailures`는 `consecutive_failure_limit`으로 정상 종료해 모두 PASS.
+- 범위 준수: 새 기능, GoalPath 문제, 소스 코드, Runner 스크립트, workflow는 변경하지 않았고 master 전환·병합과 push도 수행하지 않았다.
+- 결론: 자율 실행 지침과 Runner preflight가 Node.js 22.x 또는 24.x LTS라는 동일한 정책을 설명한다.
+
+## 46번째 LOOP — Autonomous Runner GoalPath 프롬프트 적용
+
+- 목적: `run-autonomous-loop.ps1`의 `-GoalPath`가 파일 존재 확인뿐 아니라 analysis, test, implementation, correction 단계의 모든 Codex 프롬프트에 실제로 적용되도록 수정한다.
+- 시작 안전 점검: 현재 브랜치 `autonomy/loop-runner-v1`, 작업 트리는 기존 LOOP 46 변경 전 clean, 현재 Node.js는 `v24.18.0`이었다.
+- 원인: Runner는 `-GoalPath` 기본값을 `AUTONOMOUS_GOAL.md`로 정의하고 `$goalFullPath`로 해석해 파일 존재를 확인했지만, 네 단계 프롬프트는 `AUTONOMOUS_GOAL.md`를 하드코딩해 사용자 지정 경로를 전달하지 않았다.
+- Runner 수정: analysis, test, implementation, correction 네 단계 프롬프트의 하드코딩된 목표 파일명을 Runner가 해석한 `$goalFullPath`로 교체했다. 기본 `-GoalPath` 값과 경로 해석·존재 확인은 유지했다.
+- 규칙 정합성: `AGENTS.md`의 목표 파일 읽기 및 편집 금지 규칙을 Runner가 선택한 목표 파일로 일반화하고 `AUTONOMOUS_GOAL.md`가 기본값임을 명시했다.
+- 정책 보존: Runner의 권한, 허용 파일 목록, Git 정책, 반복·시간·복구 정책은 변경하지 않았다. 새 기능이나 의존성도 추가하지 않았다.
+- 정적 검증: PowerShell 구문 검사 PASS. 프롬프트의 하드코딩된 `AUTONOMOUS_GOAL.md` 참조가 제거되고 네 단계 모두 `$goalFullPath`를 사용하는지 확인했다. `git diff --check`도 PASS였으며 LF → CRLF 경고만 있었다.
+- Smoke Test: `ProgressThenNoProgress`는 `no_progress_limit`, `ConsecutiveFailures`는 `consecutive_failure_limit`으로 정상 종료해 모두 PASS했다.
+- Codex sandbox 검증: sandbox 내부 `npm run verify`는 `verify.js`가 생성하는 하위 프로세스가 `spawnSync EPERM`으로 차단되어 9개 검증을 실행하지 못했다. 테스트 assertion 또는 구현 실패가 아닌 환경 제약으로 확인됐다.
+- 외부 검증: 운영자가 일반 PowerShell 환경에서 `npm run verify`를 실행해 9개 검증 모두 PASS를 확인했다.
+- 실제 변경 파일: `AGENTS.md`, `LOOP_PLAN.md`, `LOOP_LOG.md`, `scripts/run-autonomous-loop.ps1`.
+- 원격 및 master 작업: push, master 전환·병합, amend, rebase, force 작업과 브랜치 삭제를 수행하지 않았다.
+- 결론: 기본 목표 파일 동작을 보존하면서 사용자 지정 `GoalPath`가 네 자율 품질 단계의 모든 Codex 프롬프트에 일관되게 적용된다.
+
+## 47번째 LOOP — quoted CSV escaped double quote 회귀 테스트
+
+- 자율 실행: `.autonomous-loop/runs/run-20260712-090836`의 iteration 1. 결과는 `progress`이고 실패 및 복구는 없었다.
+- 선택 작업: 따옴표로 감싼 CSV 필드 내부의 escaped double quote(`""` → `"`) 처리에 직접적인 회귀 테스트를 추가했다.
+- 발견 근거: `parseCsv`는 escaped double quote를 단일 double quote로 변환하는 분기를 구현하고 있었지만 기존 `test.js`는 quoted comma와 닫히지 않은 따옴표만 다뤄 해당 분기를 직접 보호하지 않았다.
+- 변경 내용: `"A ""quoted"" item",10` 입력이 `A "quoted" item`과 인접 amount `10`으로 파싱되는지 `assert.deepStrictEqual`로 검증했다.
+- 변경 파일: `test.js` 한 개, 4줄 추가. 프로덕션 코드와 fixture는 변경하지 않았다.
+- 테스트 및 검증: test 단계에서 `npm test`가 통과했고, Runner의 review 전 및 최종 `npm run verify`에서 각각 9개 검증 모두 PASS했다. `git diff --check`도 PASS했다.
+- 독립 리뷰: review classifier 결과 `REVIEW_PASS`. correction 단계는 실행되지 않았다.
+- 커밋: `d2db9ec chore: autonomous quality loop 1`.
+- 원격 및 master 작업: push, master 전환·병합을 수행하지 않았다.
+
+## 48번째 LOOP — quoted CSV 내부 CRLF 회귀 테스트
+
+- 자율 실행: `.autonomous-loop/runs/run-20260712-090836`의 iteration 2. 결과는 `progress`이고 실패 및 복구는 없었다.
+- 선택 작업: 따옴표로 감싼 CSV 필드 내부의 CRLF 줄바꿈 보존과 후속 amount 합계 처리를 직접 검증하는 회귀 테스트를 추가했다.
+- 발견 근거: `parseCsv`는 quoted field 내부의 `\r\n`을 보존하고 `sumAmount`는 해당 레코드의 amount를 합산했지만, 기존 `test.js`에는 이 동작을 보호하는 테스트가 없었다. 분석 단계의 직접 probe는 description `first line\r\nsecond line`, amount `10`과 total `10`, errorCount `0`을 확인했다.
+- 변경 내용: embedded CRLF가 있는 `quotedCrLfCsv`를 추가하고 `parseCsv`가 하나의 레코드로 보존하는지, `sumAmount`가 `{ total: 10, errorCount: 0 }`을 반환하는지 검증했다.
+- 변경 파일: `test.js` 한 개, 6줄 추가. 프로덕션 코드와 fixture는 변경하지 않았다.
+- 테스트 및 검증: test 단계의 직접 Node 테스트가 통과했고, Runner의 review 전 및 최종 `npm run verify`에서 각각 9개 검증 모두 PASS했다. `git diff --check`도 PASS했다.
+- 독립 리뷰: review classifier 결과 `REVIEW_PASS`. correction 단계는 실행되지 않았다.
+- 커밋: `0168668 chore: autonomous quality loop 2`.
+- 실행 종료: 두 번째 iteration 후 설정된 반복 수에 도달해 전체 실행은 `max_iterations`로 종료됐으며 성공 커밋 2개, 실패 0개였다. 실행 후 `npm run verify` 9개 모두 PASS와 clean 작업 트리가 확인됐다.
+- 원격 및 master 작업: push, master 전환·병합을 수행하지 않았다.
+
+## 49번째 LOOP — Autonomous Runner UTF-8 출력 캡처
+
+- 목적: `Invoke-NativeLogged`가 리디렉션된 자식 프로세스 stdout과 stderr를 UTF-8로 명시적으로 디코딩해 한글 출력과 저장 로그의 mojibake를 방지한다.
+- 원인 확인: 자식 프로세스의 UTF-8 한글은 ProcessStartInfo 기본 디코딩에서 stdout·stderr 모두 mojibake가 되었고, 저장 전 문자열이 이미 손상됐다. 기존 로그 저장은 `Set-Content -Encoding utf8`으로 정상 UTF-8 저장을 수행하고 있었다.
+- 구현: `Invoke-NativeLogged`의 `ProcessStartInfo`에 `StandardOutputEncoding`과 `StandardErrorEncoding`을 모두 `[System.Text.Encoding]::UTF8`로 설정했다. 설정은 `Process.Start()` 전에 적용된다.
+- 회귀 검증: `Encoding` Smoke Scenario를 추가했다. `%TEMP%`의 GUID 임시 디렉터리에서 Node 자식 프로세스가 `STDOUT 한글 테스트`와 `STDERR 한글 테스트`를 출력하고, 실제 `Invoke-NativeLogged` 반환값의 stdout·stderr와 UTF-8 로그 파일에서 각각 원문 보존을 확인한다. `finally`에서 임시 디렉터리를 정리하며 Codex 서비스·네트워크·Git 변경을 호출하지 않는다.
+- 격리 보정: 최초 독립 리뷰는 Encoding Smoke Test가 사용하지 않는 `.autonomous-loop/runs/smoke-encoding-*` 빈 디렉터리를 남긴다고 판정했다. Encoding 분기를 repoRoot 설정 직후, artifact/run-directory 생성 전으로 이동해 이를 제거했다. 기존 두 Smoke Scenario는 기존 artifact·보고서 경로를 그대로 유지한다.
+- 독립 리뷰: 보정 후 최종 판정은 `APPROVE WITH NOTES`였다. CRITICAL·HIGH·MEDIUM·LOW 발견사항은 없었다.
+- 검증: PowerShell 구문 검사 PASS. `Encoding` Smoke Test는 stdout·stderr 한글 원문과 UTF-8 로그 보존을 확인해 PASS했다. `ProgressThenNoProgress`는 `no_progress_limit`, `ConsecutiveFailures`는 `consecutive_failure_limit`으로 각각 PASS했다. `npm run verify`는 9개 검증 모두 PASS했고 `git diff --check`도 PASS했다.
+- 범위 보존: Console 입력·출력 인코딩, `$OutputEncoding`, 로그 저장 방식, stdout/stderr 병합 순서, timeout·종료 코드, allowlist, 브랜치·clean 검사, GoalPath, 반복·중단·복구·커밋 정책 및 npm/cmd.exe 실행 방식은 변경하지 않았다.
+- 후속 선택 개선: 반환 문자열과 로그의 `Contains` 검증을 정확한 줄 동등성으로 강화하는 것, cleanup 실패가 원래 테스트 오류를 가리지 않도록 보존하는 것은 이번 LOOP에서 수정하지 않고 후속 선택 개선으로 남긴다.
+- 원격 및 master 작업: push, master 전환·병합, amend, rebase, force 작업과 브랜치 삭제를 수행하지 않았다.
