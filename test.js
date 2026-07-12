@@ -49,6 +49,17 @@ assert.deepStrictEqual(parseCsv(quotedCrLfCsv), [
   ['A', 'first line\r\nsecond line', '10'],
 ]);
 assert.deepStrictEqual(sumAmount(quotedCrLfCsv), { total: 10, errorCount: 0 });
+const multilineQuotedFieldWarnings = [];
+assert.deepStrictEqual(
+  sumAmount(
+    'item,description,amount\nA,"first line\nsecond line",10\nB,invalid,not-a-number\n',
+    (message) => multilineQuotedFieldWarnings.push(message),
+  ),
+  { total: 10, errorCount: 1 },
+);
+assert.deepStrictEqual(multilineQuotedFieldWarnings, [
+  '경고: 4행의 amount 값이 올바른 숫자가 아닙니다: not-a-number',
+]);
 assert.throws(() => parseCsv('item,amount\n"A,10\n'), /따옴표가 닫히지 않았습니다/);
 assert.throws(() => parseCsv('item,amount\n"A"x,10\n'), /따옴표 형식/);
 assert.throws(() => parseCsv('item,amount\nA"bad",10\n'), /따옴표 형식/);
