@@ -704,3 +704,16 @@
 - 커밋: `0168668 chore: autonomous quality loop 2`.
 - 실행 종료: 두 번째 iteration 후 설정된 반복 수에 도달해 전체 실행은 `max_iterations`로 종료됐으며 성공 커밋 2개, 실패 0개였다. 실행 후 `npm run verify` 9개 모두 PASS와 clean 작업 트리가 확인됐다.
 - 원격 및 master 작업: push, master 전환·병합을 수행하지 않았다.
+
+## 49번째 LOOP — Autonomous Runner UTF-8 출력 캡처
+
+- 목적: `Invoke-NativeLogged`가 리디렉션된 자식 프로세스 stdout과 stderr를 UTF-8로 명시적으로 디코딩해 한글 출력과 저장 로그의 mojibake를 방지한다.
+- 원인 확인: 자식 프로세스의 UTF-8 한글은 ProcessStartInfo 기본 디코딩에서 stdout·stderr 모두 mojibake가 되었고, 저장 전 문자열이 이미 손상됐다. 기존 로그 저장은 `Set-Content -Encoding utf8`으로 정상 UTF-8 저장을 수행하고 있었다.
+- 구현: `Invoke-NativeLogged`의 `ProcessStartInfo`에 `StandardOutputEncoding`과 `StandardErrorEncoding`을 모두 `[System.Text.Encoding]::UTF8`로 설정했다. 설정은 `Process.Start()` 전에 적용된다.
+- 회귀 검증: `Encoding` Smoke Scenario를 추가했다. `%TEMP%`의 GUID 임시 디렉터리에서 Node 자식 프로세스가 `STDOUT 한글 테스트`와 `STDERR 한글 테스트`를 출력하고, 실제 `Invoke-NativeLogged` 반환값의 stdout·stderr와 UTF-8 로그 파일에서 각각 원문 보존을 확인한다. `finally`에서 임시 디렉터리를 정리하며 Codex 서비스·네트워크·Git 변경을 호출하지 않는다.
+- 격리 보정: 최초 독립 리뷰는 Encoding Smoke Test가 사용하지 않는 `.autonomous-loop/runs/smoke-encoding-*` 빈 디렉터리를 남긴다고 판정했다. Encoding 분기를 repoRoot 설정 직후, artifact/run-directory 생성 전으로 이동해 이를 제거했다. 기존 두 Smoke Scenario는 기존 artifact·보고서 경로를 그대로 유지한다.
+- 독립 리뷰: 보정 후 최종 판정은 `APPROVE WITH NOTES`였다. CRITICAL·HIGH·MEDIUM·LOW 발견사항은 없었다.
+- 검증: PowerShell 구문 검사 PASS. `Encoding` Smoke Test는 stdout·stderr 한글 원문과 UTF-8 로그 보존을 확인해 PASS했다. `ProgressThenNoProgress`는 `no_progress_limit`, `ConsecutiveFailures`는 `consecutive_failure_limit`으로 각각 PASS했다. `npm run verify`는 9개 검증 모두 PASS했고 `git diff --check`도 PASS했다.
+- 범위 보존: Console 입력·출력 인코딩, `$OutputEncoding`, 로그 저장 방식, stdout/stderr 병합 순서, timeout·종료 코드, allowlist, 브랜치·clean 검사, GoalPath, 반복·중단·복구·커밋 정책 및 npm/cmd.exe 실행 방식은 변경하지 않았다.
+- 후속 선택 개선: 반환 문자열과 로그의 `Contains` 검증을 정확한 줄 동등성으로 강화하는 것, cleanup 실패가 원래 테스트 오류를 가리지 않도록 보존하는 것은 이번 LOOP에서 수정하지 않고 후속 선택 개선으로 남긴다.
+- 원격 및 master 작업: push, master 전환·병합, amend, rebase, force 작업과 브랜치 삭제를 수행하지 않았다.

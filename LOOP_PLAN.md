@@ -287,3 +287,14 @@
 - [x] TODO 138: quoted field 내부 CRLF 보존과 `sumAmount` 동작에 직접적인 테스트가 없음을 확인한다.
 - [x] TODO 139: embedded CRLF가 포함된 레코드의 파싱 결과와 total `10`, errorCount `0`을 검증한다.
 - [x] TODO 140: `npm run verify` 9개, `git diff --check`와 독립 리뷰를 통과하고 정상 로컬 커밋한다.
+
+## 49번째 LOOP — Autonomous Runner UTF-8 출력 캡처
+
+- 목표: `Invoke-NativeLogged`가 리디렉션된 stdout과 stderr를 UTF-8로 명시적으로 디코딩해 한글 출력과 로그의 mojibake를 방지한다.
+- 실행 범위: `scripts/run-autonomous-loop.ps1`과 LOOP 문서만 수정하며, Console 인코딩·로그 저장·출력 병합·timeout·Git·반복·복구 정책은 유지한다.
+- 품질 게이트: UTF-8 stdout/stderr와 로그 보존을 검사하는 `Encoding` Smoke Test, 기존 두 Smoke Test, `npm run verify` 9개, PowerShell 구문 검사 및 `git diff --check` PASS.
+- [x] TODO 141: `ProcessStartInfo`의 stdout·stderr 기본 디코딩이 UTF-8 한글을 손상시키는 원인을 재현·확인한다.
+- [x] TODO 142: stdout과 stderr 양쪽에 `Standard*Encoding = UTF-8`을 최소 적용한다.
+- [x] TODO 143: `%TEMP%`에서 실제 `Invoke-NativeLogged` 경로를 통과하는 한글 출력 Encoding Smoke Test를 추가하고 자원을 정리한다.
+- [x] TODO 144: Encoding Smoke Test가 저장소 내부 빈 run 디렉터리를 남기지 않도록 artifact 초기화 전으로 이동한다.
+- [x] TODO 145: 독립 리뷰 `APPROVE WITH NOTES`, 세 Smoke Test, `npm run verify`와 `git diff --check`를 통과하고 관련 파일만 로컬 커밋한다.

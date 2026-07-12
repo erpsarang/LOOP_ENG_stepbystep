@@ -16,7 +16,7 @@ param(
 
   [switch]$SmokeTest,
 
-  [ValidateSet('ProgressThenNoProgress', 'ConsecutiveFailures')]
+  [ValidateSet('ProgressThenNoProgress', 'ConsecutiveFailures', 'Encoding')]
   [string]$SmokeScenario = 'ProgressThenNoProgress'
 )
 
@@ -38,6 +38,8 @@ function Invoke-NativeLogged {
   $startInfo.UseShellExecute = $false
   $startInfo.RedirectStandardOutput = $true
   $startInfo.RedirectStandardError = $true
+  $startInfo.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+  $startInfo.StandardErrorEncoding = [System.Text.Encoding]::UTF8
   $startInfo.CreateNoWindow = $true
   foreach ($argument in $Arguments) { $startInfo.ArgumentList.Add($argument) }
 
@@ -328,8 +330,42 @@ function Invoke-SmokeRun {
   Write-Host "Smoke scenario $Scenario passed with termination reason: $reason"
 }
 
+function Invoke-EncodingSmokeTest {
+  $temporaryDirectory = Join-Path ([System.IO.Path]::GetTempPath()) ("autonomous-runner-encoding-{0}" -f [System.Guid]::NewGuid())
+  $logPath = Join-Path $temporaryDirectory 'encoding.log'
+  $stdoutMessage = 'STDOUT 한글 테스트'
+  $stderrMessage = 'STDERR 한글 테스트'
+
+  try {
+    New-Item -ItemType Directory -Path $temporaryDirectory | Out-Null
+    $result = Invoke-NativeLogged -Command 'node' -Arguments @(
+      '-e', "console.log('$stdoutMessage'); console.error('$stderrMessage');"
+    ) -LogPath $logPath
+    if ($result.ExitCode -ne 0) { throw "Encoding smoke command failed with exit code $($result.ExitCode)." }
+    if (-not $result.Stdout.Contains($stdoutMessage)) { throw 'Encoding smoke stdout did not preserve the expected Korean message.' }
+    if (-not $result.Stderr.Contains($stderrMessage)) { throw 'Encoding smoke stderr did not preserve the expected Korean message.' }
+    $log = Get-Content -LiteralPath $logPath -Raw -Encoding utf8
+    if (-not $log.Contains($stdoutMessage) -or -not $log.Contains($stderrMessage)) {
+      throw 'Encoding smoke log did not preserve the expected Korean messages.'
+    }
+    Write-Host 'Smoke scenario Encoding passed with UTF-8 stdout and stderr.'
+  } finally {
+    if (Test-Path -LiteralPath $temporaryDirectory) {
+      if ((Get-Item -LiteralPath $temporaryDirectory -Force).Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+        throw 'Encoding smoke temporary directory must not be a reparse point.'
+      }
+      Remove-Item -LiteralPath $temporaryDirectory -Recurse -Force
+    }
+  }
+}
+
 $repoRoot = (Get-GitOutput -Arguments @('rev-parse', '--show-toplevel')).Trim()
 Set-Location -LiteralPath $repoRoot
+if ($SmokeTest -and $SmokeScenario -eq 'Encoding') {
+  $script:RunDeadline = (Get-Date).AddMinutes(1)
+  Invoke-EncodingSmokeTest
+  exit 0
+}
 $artifactRoot = Join-Path $repoRoot '.autonomous-loop'
 if (Test-Path -LiteralPath $artifactRoot) {
   if ((Get-Item -LiteralPath $artifactRoot -Force).Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
