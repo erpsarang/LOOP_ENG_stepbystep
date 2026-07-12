@@ -38,15 +38,16 @@ const checks = [
     command: nodeCommand,
     args: ['app.js', FIXTURES.invalidAmount.path, '--json'],
     expectedStatus: FIXTURES.invalidAmount.expectedStatus,
-    validate: ({ stdout }) => {
+    validate: ({ stdout, stderr }) => {
       try {
         const result = JSON.parse(stdout);
         if (
           result.total !== FIXTURES.invalidAmount.total
           || result.errorCount !== FIXTURES.invalidAmount.errorCount
           || result.warnings?.length !== FIXTURES.invalidAmount.warningCount
+          || stderr.trim() !== ''
         ) {
-          return 'JSON 결과의 합계, 오류 행 수 또는 warnings가 예상과 다릅니다.';
+          return 'JSON 결과, warnings 또는 stderr가 예상과 다릅니다.';
         }
         return null;
       } catch (error) {

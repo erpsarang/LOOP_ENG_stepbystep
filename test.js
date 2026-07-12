@@ -2,6 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const vm = require('vm');
 const {
   parseCsv,
   summarizeAmounts,
@@ -320,5 +321,75 @@ try {
 } finally {
   fs.rmSync(tempDirectory, { recursive: true, force: true });
 }
+
+const verifySource = fs.readFileSync(path.join(__dirname, 'verify.js'), 'utf8');
+const verifyOutput = { logs: [], errors: [] };
+const verifyProcess = { execPath: process.execPath, platform: process.platform, env: {}, exitCode: 0 };
+const expectedJson = JSON.stringify({
+  total: FIXTURES.invalidAmount.total,
+  errorCount: FIXTURES.invalidAmount.errorCount,
+  warnings: Array(FIXTURES.invalidAmount.warningCount).fill('warning'),
+});
+vm.runInNewContext(verifySource, {
+  __dirname,
+  console: {
+    log: (message) => verifyOutput.logs.push(message),
+    error: (message) => verifyOutput.errors.push(message),
+  },
+  process: verifyProcess,
+  require: (moduleName) => {
+    if (moduleName === 'child_process') {
+      return {
+        spawnSync: (_command, args) => {
+          if (args.includes('--json') && !args.includes('--csv')) {
+            return { status: 0, stdout: expectedJson, stderr: 'unexpected diagnostic' };
+          }
+          if (args.includes('--summary') && !args.includes('--csv')) {
+            return {
+              status: 0,
+              stdout: [
+                'CSV 처리 요약',
+                `- 합계: ${FIXTURES.invalidAmount.total}`,
+                `- 오류 행 수: ${FIXTURES.invalidAmount.errorCount}`,
+                `- 경고 수: ${FIXTURES.invalidAmount.warningCount}`,
+              ].join('\n'),
+              stderr: '',
+            };
+          }
+          if (args.includes('--csv')) {
+            return {
+              status: 0,
+              stdout: `total,errorCount,warningCount\n${FIXTURES.invalidAmount.total},${FIXTURES.invalidAmount.errorCount},${FIXTURES.invalidAmount.warningCount}`,
+              stderr: '',
+            };
+          }
+          if (args.includes('missing.csv')) {
+            return { status: 1, stdout: '', stderr: 'CSV 파일을 찾을 수 없습니다: missing.csv' };
+          }
+          if (args.includes('--help')) {
+            return { status: 0, stdout: '사용법: node app.js [CSV 파일] [--json | --summary | --csv]', stderr: '' };
+          }
+          if (args.includes(FIXTURES.missingAmountColumn.path)) {
+            return { status: 1, stdout: '', stderr: FIXTURES.missingAmountColumn.errorMessage };
+          }
+          if (args[0] === '/d' || args[0] === 'test') {
+            return { status: 0, stdout: '모든 테스트 통과', stderr: '' };
+          }
+          return {
+            status: 0,
+            stdout: `amount 합계: ${FIXTURES.valid.total}, 오류 행 수: ${FIXTURES.valid.errorCount}`,
+            stderr: '',
+          };
+        },
+      };
+    }
+    if (moduleName === 'path') return path;
+    if (moduleName === './fixtures/expectations') return FIXTURES;
+    throw new Error(`Unexpected verify.js dependency: ${moduleName}`);
+  },
+});
+assert.strictEqual(verifyProcess.exitCode, 1);
+assert.ok(verifyOutput.errors.some((message) => message.includes('[FAIL] JSON CLI 출력')));
+assert.ok(verifyOutput.errors.some((message) => message.includes('stderr: unexpected diagnostic')));
 
 console.log('모든 테스트 통과');
