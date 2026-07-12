@@ -278,6 +278,14 @@ try {
     '오류: CSV의 따옴표가 닫히지 않았습니다.',
   ]);
 
+  const invalidQuotedFieldCsvPath = path.join(tempDirectory, 'invalid-quoted-field.csv');
+  fs.writeFileSync(invalidQuotedFieldCsvPath, 'item,amount\n"A"x,10\n', 'utf8');
+  const invalidQuotedFieldCapture = captureOutput();
+  assert.strictEqual(executeCli(invalidQuotedFieldCsvPath, invalidQuotedFieldCapture.output), 1);
+  assert.deepStrictEqual(invalidQuotedFieldCapture.messages.errors, [
+    '오류: CSV의 따옴표 형식이 올바르지 않습니다.',
+  ]);
+
   const noAmountCapture = captureOutput();
   assert.strictEqual(
     executeCli(missingAmountColumnFixturePath, noAmountCapture.output),
