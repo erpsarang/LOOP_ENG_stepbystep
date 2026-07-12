@@ -270,6 +270,14 @@ try {
   assert.match(missingCapture.messages.errors[0], /오류: CSV 파일을 찾을 수 없습니다:/);
   assert.match(missingCapture.messages.errors[0], /missing\.csv/);
 
+  const malformedQuotedCsvPath = path.join(tempDirectory, 'malformed-quoted.csv');
+  fs.writeFileSync(malformedQuotedCsvPath, 'item,amount\nA,"10\n', 'utf8');
+  const malformedQuotedCapture = captureOutput();
+  assert.strictEqual(executeCli(malformedQuotedCsvPath, malformedQuotedCapture.output), 1);
+  assert.deepStrictEqual(malformedQuotedCapture.messages.errors, [
+    '오류: CSV의 따옴표가 닫히지 않았습니다.',
+  ]);
+
   const noAmountCapture = captureOutput();
   assert.strictEqual(
     executeCli(missingAmountColumnFixturePath, noAmountCapture.output),
