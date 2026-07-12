@@ -171,6 +171,10 @@ const helpCapture = captureOutput();
 assert.strictEqual(executeArgs(['--help'], helpCapture.output), 0);
 assert.match(helpCapture.messages.logs[0], /사용법:/);
 
+const helpAliasCapture = captureOutput();
+assert.strictEqual(executeArgs(['-h'], helpAliasCapture.output), 0);
+assert.match(helpAliasCapture.messages.logs[0], /사용법:/);
+
 const invalidOptionCapture = captureOutput();
 assert.strictEqual(executeArgs(['--unknown'], invalidOptionCapture.output), 1);
 assert.deepStrictEqual(invalidOptionCapture.messages.errors, ['오류: 알 수 없는 옵션입니다: --unknown']);
