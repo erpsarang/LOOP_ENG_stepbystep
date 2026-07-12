@@ -85,6 +85,15 @@ assert.deepStrictEqual(blankLineWarnings, [
   '경고: 4행의 amount 값이 올바른 숫자가 아닙니다: invalid',
 ]);
 
+const crlfBlankLineWarnings = [];
+assert.deepStrictEqual(
+  sumAmount('item,amount\r\nA,10\r\n\r\nB,invalid\r\n', (message) => crlfBlankLineWarnings.push(message)),
+  { total: 10, errorCount: 1 },
+);
+assert.deepStrictEqual(crlfBlankLineWarnings, [
+  '경고: 4행의 amount 값이 올바른 숫자가 아닙니다: invalid',
+]);
+
 const quotedEmptyAmountWarnings = [];
 assert.deepStrictEqual(
   sumAmount('amount\n""', (message) => quotedEmptyAmountWarnings.push(message)),
