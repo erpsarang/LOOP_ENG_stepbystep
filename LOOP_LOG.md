@@ -679,3 +679,28 @@
 - 실제 변경 파일: `AGENTS.md`, `LOOP_PLAN.md`, `LOOP_LOG.md`, `scripts/run-autonomous-loop.ps1`.
 - 원격 및 master 작업: push, master 전환·병합, amend, rebase, force 작업과 브랜치 삭제를 수행하지 않았다.
 - 결론: 기본 목표 파일 동작을 보존하면서 사용자 지정 `GoalPath`가 네 자율 품질 단계의 모든 Codex 프롬프트에 일관되게 적용된다.
+
+## 47번째 LOOP — quoted CSV escaped double quote 회귀 테스트
+
+- 자율 실행: `.autonomous-loop/runs/run-20260712-090836`의 iteration 1. 결과는 `progress`이고 실패 및 복구는 없었다.
+- 선택 작업: 따옴표로 감싼 CSV 필드 내부의 escaped double quote(`""` → `"`) 처리에 직접적인 회귀 테스트를 추가했다.
+- 발견 근거: `parseCsv`는 escaped double quote를 단일 double quote로 변환하는 분기를 구현하고 있었지만 기존 `test.js`는 quoted comma와 닫히지 않은 따옴표만 다뤄 해당 분기를 직접 보호하지 않았다.
+- 변경 내용: `"A ""quoted"" item",10` 입력이 `A "quoted" item`과 인접 amount `10`으로 파싱되는지 `assert.deepStrictEqual`로 검증했다.
+- 변경 파일: `test.js` 한 개, 4줄 추가. 프로덕션 코드와 fixture는 변경하지 않았다.
+- 테스트 및 검증: test 단계에서 `npm test`가 통과했고, Runner의 review 전 및 최종 `npm run verify`에서 각각 9개 검증 모두 PASS했다. `git diff --check`도 PASS했다.
+- 독립 리뷰: review classifier 결과 `REVIEW_PASS`. correction 단계는 실행되지 않았다.
+- 커밋: `d2db9ec chore: autonomous quality loop 1`.
+- 원격 및 master 작업: push, master 전환·병합을 수행하지 않았다.
+
+## 48번째 LOOP — quoted CSV 내부 CRLF 회귀 테스트
+
+- 자율 실행: `.autonomous-loop/runs/run-20260712-090836`의 iteration 2. 결과는 `progress`이고 실패 및 복구는 없었다.
+- 선택 작업: 따옴표로 감싼 CSV 필드 내부의 CRLF 줄바꿈 보존과 후속 amount 합계 처리를 직접 검증하는 회귀 테스트를 추가했다.
+- 발견 근거: `parseCsv`는 quoted field 내부의 `\r\n`을 보존하고 `sumAmount`는 해당 레코드의 amount를 합산했지만, 기존 `test.js`에는 이 동작을 보호하는 테스트가 없었다. 분석 단계의 직접 probe는 description `first line\r\nsecond line`, amount `10`과 total `10`, errorCount `0`을 확인했다.
+- 변경 내용: embedded CRLF가 있는 `quotedCrLfCsv`를 추가하고 `parseCsv`가 하나의 레코드로 보존하는지, `sumAmount`가 `{ total: 10, errorCount: 0 }`을 반환하는지 검증했다.
+- 변경 파일: `test.js` 한 개, 6줄 추가. 프로덕션 코드와 fixture는 변경하지 않았다.
+- 테스트 및 검증: test 단계의 직접 Node 테스트가 통과했고, Runner의 review 전 및 최종 `npm run verify`에서 각각 9개 검증 모두 PASS했다. `git diff --check`도 PASS했다.
+- 독립 리뷰: review classifier 결과 `REVIEW_PASS`. correction 단계는 실행되지 않았다.
+- 커밋: `0168668 chore: autonomous quality loop 2`.
+- 실행 종료: 두 번째 iteration 후 설정된 반복 수에 도달해 전체 실행은 `max_iterations`로 종료됐으며 성공 커밋 2개, 실패 0개였다. 실행 후 `npm run verify` 9개 모두 PASS와 clean 작업 트리가 확인됐다.
+- 원격 및 master 작업: push, master 전환·병합을 수행하지 않았다.

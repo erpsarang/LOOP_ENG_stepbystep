@@ -271,3 +271,19 @@
 - [x] TODO 132: 네 단계 프롬프트가 Runner가 해석한 목표 경로를 사용하도록 수정하고 기본값을 유지한다.
 - [x] TODO 133: `AGENTS.md`의 목표 파일 읽기·편집 금지 규칙을 사용자 지정 `GoalPath`와 일치시킨다.
 - [x] TODO 134: 구문·정적 감사, 두 Smoke Test와 `npm run verify`를 통과하고 관련 파일만 로컬 커밋한다.
+
+## 47번째 LOOP — quoted CSV escaped double quote 회귀 테스트
+
+- 목표: 따옴표로 감싼 CSV 필드 내부의 escaped double quote(`""`) 처리에 직접적인 회귀 테스트를 추가한다.
+- 실행 범위: 자율 Runner `run-20260712-090836`의 iteration 1로 `test.js`만 수정하며 프로덕션 코드와 공개 CLI 동작은 변경하지 않는다.
+- [x] TODO 135: 기존 parser 테스트에 escaped double quote 분기의 직접 검증이 없음을 확인한다.
+- [x] TODO 136: `"A ""quoted"" item",10`이 `A "quoted" item`과 amount `10`으로 파싱되는지 검증한다.
+- [x] TODO 137: `npm run verify` 9개, `git diff --check`와 독립 리뷰를 통과하고 정상 로컬 커밋한다.
+
+## 48번째 LOOP — quoted CSV 내부 CRLF 회귀 테스트
+
+- 목표: 따옴표로 감싼 CSV 필드 내부의 CRLF 줄바꿈 보존과 후속 amount 합계 처리를 회귀 테스트로 보호한다.
+- 실행 범위: 자율 Runner `run-20260712-090836`의 iteration 2로 `test.js`만 수정하며 fixture와 프로덕션 코드는 변경하지 않는다.
+- [x] TODO 138: quoted field 내부 CRLF 보존과 `sumAmount` 동작에 직접적인 테스트가 없음을 확인한다.
+- [x] TODO 139: embedded CRLF가 포함된 레코드의 파싱 결과와 total `10`, errorCount `0`을 검증한다.
+- [x] TODO 140: `npm run verify` 9개, `git diff --check`와 독립 리뷰를 통과하고 정상 로컬 커밋한다.
