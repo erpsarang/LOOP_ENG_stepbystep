@@ -226,6 +226,14 @@ assert.deepStrictEqual(csvCapture.messages.logs, [
 assert.deepStrictEqual(csvCapture.messages.warnings, []);
 assert.deepStrictEqual(csvCapture.messages.errors, []);
 
+const standaloneCsvCapture = captureOutput();
+runCli(invalidAmountFixturePath, standaloneCsvCapture.output, { csv: true });
+assert.deepStrictEqual(standaloneCsvCapture.messages.logs, [
+  `total,errorCount,warningCount\n${FIXTURES.invalidAmount.total},${FIXTURES.invalidAmount.errorCount},${FIXTURES.invalidAmount.warningCount}`,
+]);
+assert.deepStrictEqual(standaloneCsvCapture.messages.warnings, []);
+assert.deepStrictEqual(standaloneCsvCapture.messages.errors, []);
+
 const jsonCsvCapture = captureOutput();
 assert.strictEqual(
   executeArgs([invalidAmountFixturePath, '--json', '--csv'], jsonCsvCapture.output),
