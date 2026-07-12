@@ -417,7 +417,8 @@ for ($iteration = 1; $iteration -le $MaxIterations; $iteration += 1) {
 
     $analysisPrompt = @"
 You are the analysis stage of autonomous quality iteration $iteration.
-Read AGENTS.md and AUTONOMOUS_GOAL.md. Inspect the repository and identify exactly one small, valuable,
+Read AGENTS.md and the goal file at: $goalFullPath
+Inspect the repository and identify exactly one small, valuable,
 testable quality improvement. Do not edit any repository file and do not commit. Explain the evidence,
 scope, intended test, implementation approach, risks, and stop conditions. If no safe improvement exists,
 end with NO_SAFE_IMPROVEMENT.
@@ -444,7 +445,7 @@ Do not repeat any previously failed task listed here: $($skippedTasks -join ' | 
       if (Test-TimeLimit -StartedAt $startedAt -Minutes $MaxMinutes) { throw 'Time limit reached before test stage.' }
       $testPrompt = @"
 You are the test stage of autonomous quality iteration $iteration.
-Read AGENTS.md, AUTONOMOUS_GOAL.md, and this analysis file: $analysisMessage
+Read AGENTS.md, the goal file at $goalFullPath, and this analysis file: $analysisMessage
 Add only the focused regression or quality test needed for the selected improvement. Do not implement the
 production fix, do not weaken existing tests, do not edit runner control files, and do not commit.
 "@
@@ -456,7 +457,7 @@ production fix, do not weaken existing tests, do not edit runner control files, 
       if (Test-TimeLimit -StartedAt $startedAt -Minutes $MaxMinutes) { throw 'Time limit reached before implementation.' }
       $implementationPrompt = @"
 You are the implementation stage of autonomous quality iteration $iteration.
-Read AGENTS.md, AUTONOMOUS_GOAL.md, and this analysis file: $analysisMessage
+Read AGENTS.md, the goal file at $goalFullPath, and this analysis file: $analysisMessage
 Inspect the current uncommitted test changes and implement the smallest production or documentation change
 that satisfies the selected improvement. Preserve public behavior, do not weaken tests, do not edit runner
 control files, and do not commit.
@@ -483,7 +484,7 @@ control files, and do not commit.
           if (Test-TimeLimit -StartedAt $startedAt -Minutes $MaxMinutes) { throw 'Time limit reached before correction.' }
           $correctionPrompt = @"
 You are the correction stage of autonomous quality iteration $iteration.
-Read AGENTS.md, AUTONOMOUS_GOAL.md, and the independent review at:
+Read AGENTS.md, the goal file at $goalFullPath, and the independent review at:
 $(Join-Path $iterationDirectory 'review.log')
 Apply only the concrete review fixes. Do not broaden scope, weaken tests, edit runner control files, or commit.
 "@

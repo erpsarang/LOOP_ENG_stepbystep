@@ -663,3 +663,19 @@
 - smoke test 결과: `ProgressThenNoProgress`는 `no_progress_limit`, `ConsecutiveFailures`는 `consecutive_failure_limit`으로 정상 종료해 모두 PASS.
 - 범위 준수: 새 기능, GoalPath 문제, 소스 코드, Runner 스크립트, workflow는 변경하지 않았고 master 전환·병합과 push도 수행하지 않았다.
 - 결론: 자율 실행 지침과 Runner preflight가 Node.js 22.x 또는 24.x LTS라는 동일한 정책을 설명한다.
+
+## 46번째 LOOP — Autonomous Runner GoalPath 프롬프트 적용
+
+- 목적: `run-autonomous-loop.ps1`의 `-GoalPath`가 파일 존재 확인뿐 아니라 analysis, test, implementation, correction 단계의 모든 Codex 프롬프트에 실제로 적용되도록 수정한다.
+- 시작 안전 점검: 현재 브랜치 `autonomy/loop-runner-v1`, 작업 트리는 기존 LOOP 46 변경 전 clean, 현재 Node.js는 `v24.18.0`이었다.
+- 원인: Runner는 `-GoalPath` 기본값을 `AUTONOMOUS_GOAL.md`로 정의하고 `$goalFullPath`로 해석해 파일 존재를 확인했지만, 네 단계 프롬프트는 `AUTONOMOUS_GOAL.md`를 하드코딩해 사용자 지정 경로를 전달하지 않았다.
+- Runner 수정: analysis, test, implementation, correction 네 단계 프롬프트의 하드코딩된 목표 파일명을 Runner가 해석한 `$goalFullPath`로 교체했다. 기본 `-GoalPath` 값과 경로 해석·존재 확인은 유지했다.
+- 규칙 정합성: `AGENTS.md`의 목표 파일 읽기 및 편집 금지 규칙을 Runner가 선택한 목표 파일로 일반화하고 `AUTONOMOUS_GOAL.md`가 기본값임을 명시했다.
+- 정책 보존: Runner의 권한, 허용 파일 목록, Git 정책, 반복·시간·복구 정책은 변경하지 않았다. 새 기능이나 의존성도 추가하지 않았다.
+- 정적 검증: PowerShell 구문 검사 PASS. 프롬프트의 하드코딩된 `AUTONOMOUS_GOAL.md` 참조가 제거되고 네 단계 모두 `$goalFullPath`를 사용하는지 확인했다. `git diff --check`도 PASS였으며 LF → CRLF 경고만 있었다.
+- Smoke Test: `ProgressThenNoProgress`는 `no_progress_limit`, `ConsecutiveFailures`는 `consecutive_failure_limit`으로 정상 종료해 모두 PASS했다.
+- Codex sandbox 검증: sandbox 내부 `npm run verify`는 `verify.js`가 생성하는 하위 프로세스가 `spawnSync EPERM`으로 차단되어 9개 검증을 실행하지 못했다. 테스트 assertion 또는 구현 실패가 아닌 환경 제약으로 확인됐다.
+- 외부 검증: 운영자가 일반 PowerShell 환경에서 `npm run verify`를 실행해 9개 검증 모두 PASS를 확인했다.
+- 실제 변경 파일: `AGENTS.md`, `LOOP_PLAN.md`, `LOOP_LOG.md`, `scripts/run-autonomous-loop.ps1`.
+- 원격 및 master 작업: push, master 전환·병합, amend, rebase, force 작업과 브랜치 삭제를 수행하지 않았다.
+- 결론: 기본 목표 파일 동작을 보존하면서 사용자 지정 `GoalPath`가 네 자율 품질 단계의 모든 Codex 프롬프트에 일관되게 적용된다.

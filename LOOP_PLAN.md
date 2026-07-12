@@ -261,3 +261,13 @@
 - [x] TODO 128: `AGENTS.md`의 Node 규칙을 Node.js 22.x 또는 24.x LTS 허용으로 최소 수정한다.
 - [x] TODO 129: `npm run verify`와 두 Runner smoke test를 실행해 회귀가 없음을 확인한다.
 - [x] TODO 130: 실제 변경 파일과 검증 결과를 LOOP 문서에 기록하고 관련 파일만 로컬 커밋한다.
+
+## 46번째 LOOP — Autonomous Runner GoalPath 프롬프트 적용
+
+- 목표: `-GoalPath`로 선택한 목표 파일을 analysis, test, implementation, correction 단계의 모든 Codex 프롬프트에 적용한다.
+- 실행 범위: `scripts/run-autonomous-loop.ps1`, `AGENTS.md`, LOOP 문서만 최소 수정하며 Runner의 권한, 허용 파일 목록, Git 정책, 반복·시간·복구 정책은 유지한다.
+- 품질 게이트: PowerShell 구문 검사, 하드코딩된 목표 파일 참조 감사, `ProgressThenNoProgress`, `ConsecutiveFailures` Smoke Test와 `npm run verify` PASS.
+- [x] TODO 131: clean autonomy 브랜치, Node.js 24 LTS와 기존 `GoalPath` 해석 및 프롬프트 하드코딩 원인을 확인한다.
+- [x] TODO 132: 네 단계 프롬프트가 Runner가 해석한 목표 경로를 사용하도록 수정하고 기본값을 유지한다.
+- [x] TODO 133: `AGENTS.md`의 목표 파일 읽기·편집 금지 규칙을 사용자 지정 `GoalPath`와 일치시킨다.
+- [x] TODO 134: 구문·정적 감사, 두 Smoke Test와 `npm run verify`를 통과하고 관련 파일만 로컬 커밋한다.

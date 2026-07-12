@@ -15,12 +15,12 @@ These rules apply to every Codex invocation in this repository, including invoca
 
 ## Iteration discipline
 
-- Read `AUTONOMOUS_GOAL.md`, the current iteration analysis, and the relevant code before changing files.
+- Read the goal file selected by the Runner (default: `AUTONOMOUS_GOAL.md`), the current iteration analysis, and the relevant code before changing files.
 - Select or implement at most one small, reviewable quality improvement per iteration.
 - Preserve all existing CLI behavior unless the goal explicitly authorizes a behavior change.
 - Add or strengthen tests before implementation when practical. Never delete, skip, weaken, or rewrite tests merely to make them pass.
 - Keep changes directly tied to maintainability, reliability, tests, diagnostics, or documentation accuracy.
-- Do not edit `AGENTS.md`, `AUTONOMOUS_GOAL.md`, `scripts/run-autonomous-loop.ps1`, `.gitignore`, or runtime artifacts while executing an autonomous quality iteration.
+- Do not edit `AGENTS.md`, the goal file selected by the Runner (default: `AUTONOMOUS_GOAL.md`), `scripts/run-autonomous-loop.ps1`, `.gitignore`, or runtime artifacts while executing an autonomous quality iteration.
 - Do not commit. The runner owns commits after verification and review.
 - Do not write outside the repository except for tool-managed temporary files.
 
