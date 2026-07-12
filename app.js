@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const rowsWithQuotedFields = new WeakSet();
+const rowLineNumbers = new WeakMap();
 
 function parseCsv(text) {
   const normalizedText = text.startsWith('\uFEFF') ? text.slice(1) : text;
@@ -10,6 +11,9 @@ function parseCsv(text) {
   let fieldStarted = false;
   let rowHasQuotedField = false;
   let quoted = false;
+  let quotedFieldClosed = false;
+  let lineNumber = 1;
+  let rowStartLine = 1;
 
   for (let i = 0; i < normalizedText.length; i += 1) {
     const char = normalizedText[i];
@@ -20,10 +24,21 @@ function parseCsv(text) {
         i += 1;
       } else if (char === '"') {
         quoted = false;
+        quotedFieldClosed = true;
       } else {
         field += char;
       }
+      if (char === '\r') {
+        lineNumber += 1;
+      } else if (char === '\n' && normalizedText[i - 1] !== '\r') {
+        lineNumber += 1;
+      }
+    } else if (quotedFieldClosed && char !== ',' && char !== '\n' && char !== '\r') {
+      throw new Error('CSV의 따옴표 형식이 올바르지 않습니다.');
     } else if (char === '"') {
+      if (fieldStarted) {
+        throw new Error('CSV의 따옴표 형식이 올바르지 않습니다.');
+      }
       fieldStarted = true;
       rowHasQuotedField = true;
       quoted = true;
@@ -31,17 +46,22 @@ function parseCsv(text) {
       row.push(field);
       field = '';
       fieldStarted = false;
+      quotedFieldClosed = false;
     } else if (char === '\n' || char === '\r') {
       row.push(field);
       if (rowHasQuotedField) rowsWithQuotedFields.add(row);
+      rowLineNumbers.set(row, rowStartLine);
       rows.push(row);
       row = [];
       field = '';
       fieldStarted = false;
       rowHasQuotedField = false;
+      quotedFieldClosed = false;
       if (char === '\r' && normalizedText[i + 1] === '\n') {
         i += 1;
       }
+      lineNumber += 1;
+      rowStartLine = lineNumber;
     } else {
       field += char;
       fieldStarted = true;
@@ -55,6 +75,7 @@ function parseCsv(text) {
   if (fieldStarted || row.length > 0) {
     row.push(field);
     if (rowHasQuotedField) rowsWithQuotedFields.add(row);
+    rowLineNumbers.set(row, rowStartLine);
     rows.push(row);
   }
 
@@ -63,7 +84,7 @@ function parseCsv(text) {
 
 function summarizeAmounts(rows, warn = () => {}) {
   const nonEmptyRows = rows
-    .map((row, index) => ({ row, rowNumber: index + 1 }))
+    .map((row, index) => ({ row, rowNumber: rowLineNumbers.get(row) ?? index + 1 }))
     .filter(({ row }) => (
       rowsWithQuotedFields.has(row) || row.some((field) => field.trim() !== '')
     ));

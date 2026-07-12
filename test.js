@@ -2,6 +2,7 @@ const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const vm = require('vm');
 const {
   parseCsv,
   summarizeAmounts,
@@ -49,7 +50,31 @@ assert.deepStrictEqual(parseCsv(quotedCrLfCsv), [
   ['A', 'first line\r\nsecond line', '10'],
 ]);
 assert.deepStrictEqual(sumAmount(quotedCrLfCsv), { total: 10, errorCount: 0 });
+const multilineQuotedFieldWarnings = [];
+assert.deepStrictEqual(
+  sumAmount(
+    'item,description,amount\nA,"first line\nsecond line",10\nB,invalid,not-a-number\n',
+    (message) => multilineQuotedFieldWarnings.push(message),
+  ),
+  { total: 10, errorCount: 1 },
+);
+assert.deepStrictEqual(multilineQuotedFieldWarnings, [
+  '경고: 4행의 amount 값이 올바른 숫자가 아닙니다: not-a-number',
+]);
+const crlfMultilineQuotedFieldWarnings = [];
+assert.deepStrictEqual(
+  sumAmount(
+    'item,description,amount\r\nA,"first line\r\nsecond line",10\r\nB,invalid,not-a-number\r\n',
+    (message) => crlfMultilineQuotedFieldWarnings.push(message),
+  ),
+  { total: 10, errorCount: 1 },
+);
+assert.deepStrictEqual(crlfMultilineQuotedFieldWarnings, [
+  '경고: 4행의 amount 값이 올바른 숫자가 아닙니다: not-a-number',
+]);
 assert.throws(() => parseCsv('item,amount\n"A,10\n'), /따옴표가 닫히지 않았습니다/);
+assert.throws(() => parseCsv('item,amount\n"A"x,10\n'), /따옴표 형식/);
+assert.throws(() => parseCsv('item,amount\nA"bad",10\n'), /따옴표 형식/);
 assert.deepStrictEqual(parseCsv('\uFEFFitem,amount\nA,10\n'), [
   ['item', 'amount'],
   ['A', '10'],
@@ -80,6 +105,15 @@ assert.deepStrictEqual(
   { total: 10, errorCount: 1 },
 );
 assert.deepStrictEqual(blankLineWarnings, [
+  '경고: 4행의 amount 값이 올바른 숫자가 아닙니다: invalid',
+]);
+
+const crlfBlankLineWarnings = [];
+assert.deepStrictEqual(
+  sumAmount('item,amount\r\nA,10\r\n\r\nB,invalid\r\n', (message) => crlfBlankLineWarnings.push(message)),
+  { total: 10, errorCount: 1 },
+);
+assert.deepStrictEqual(crlfBlankLineWarnings, [
   '경고: 4행의 amount 값이 올바른 숫자가 아닙니다: invalid',
 ]);
 
@@ -138,9 +172,19 @@ const helpCapture = captureOutput();
 assert.strictEqual(executeArgs(['--help'], helpCapture.output), 0);
 assert.match(helpCapture.messages.logs[0], /사용법:/);
 
+const helpAliasCapture = captureOutput();
+assert.strictEqual(executeArgs(['-h'], helpAliasCapture.output), 0);
+assert.match(helpAliasCapture.messages.logs[0], /사용법:/);
+
 const invalidOptionCapture = captureOutput();
 assert.strictEqual(executeArgs(['--unknown'], invalidOptionCapture.output), 1);
 assert.deepStrictEqual(invalidOptionCapture.messages.errors, ['오류: 알 수 없는 옵션입니다: --unknown']);
+
+const conflictingOutputCapture = captureOutput();
+assert.strictEqual(executeArgs(['--json', '--summary'], conflictingOutputCapture.output), 1);
+assert.deepStrictEqual(conflictingOutputCapture.messages.errors, [
+  '오류: --json과 --summary는 함께 사용할 수 없습니다.',
+]);
 
 assert.deepStrictEqual(sumAmount('item,amount\n"A, large",10\nB,-3\n'), { total: 7, errorCount: 0 });
 assert.deepStrictEqual(sumAmount('item,amount\rA,10\rB,20\r'), { total: 30, errorCount: 0 });
@@ -186,6 +230,14 @@ assert.deepStrictEqual(csvCapture.messages.logs, [
 ]);
 assert.deepStrictEqual(csvCapture.messages.warnings, []);
 assert.deepStrictEqual(csvCapture.messages.errors, []);
+
+const standaloneCsvCapture = captureOutput();
+runCli(invalidAmountFixturePath, standaloneCsvCapture.output, { csv: true });
+assert.deepStrictEqual(standaloneCsvCapture.messages.logs, [
+  `total,errorCount,warningCount\n${FIXTURES.invalidAmount.total},${FIXTURES.invalidAmount.errorCount},${FIXTURES.invalidAmount.warningCount}`,
+]);
+assert.deepStrictEqual(standaloneCsvCapture.messages.warnings, []);
+assert.deepStrictEqual(standaloneCsvCapture.messages.errors, []);
 
 const jsonCsvCapture = captureOutput();
 assert.strictEqual(
@@ -242,6 +294,22 @@ try {
   assert.match(missingCapture.messages.errors[0], /오류: CSV 파일을 찾을 수 없습니다:/);
   assert.match(missingCapture.messages.errors[0], /missing\.csv/);
 
+  const malformedQuotedCsvPath = path.join(tempDirectory, 'malformed-quoted.csv');
+  fs.writeFileSync(malformedQuotedCsvPath, 'item,amount\nA,"10\n', 'utf8');
+  const malformedQuotedCapture = captureOutput();
+  assert.strictEqual(executeCli(malformedQuotedCsvPath, malformedQuotedCapture.output), 1);
+  assert.deepStrictEqual(malformedQuotedCapture.messages.errors, [
+    '오류: CSV의 따옴표가 닫히지 않았습니다.',
+  ]);
+
+  const invalidQuotedFieldCsvPath = path.join(tempDirectory, 'invalid-quoted-field.csv');
+  fs.writeFileSync(invalidQuotedFieldCsvPath, 'item,amount\n"A"x,10\n', 'utf8');
+  const invalidQuotedFieldCapture = captureOutput();
+  assert.strictEqual(executeCli(invalidQuotedFieldCsvPath, invalidQuotedFieldCapture.output), 1);
+  assert.deepStrictEqual(invalidQuotedFieldCapture.messages.errors, [
+    '오류: CSV의 따옴표 형식이 올바르지 않습니다.',
+  ]);
+
   const noAmountCapture = captureOutput();
   assert.strictEqual(
     executeCli(missingAmountColumnFixturePath, noAmountCapture.output),
@@ -253,5 +321,75 @@ try {
 } finally {
   fs.rmSync(tempDirectory, { recursive: true, force: true });
 }
+
+const verifySource = fs.readFileSync(path.join(__dirname, 'verify.js'), 'utf8');
+const verifyOutput = { logs: [], errors: [] };
+const verifyProcess = { execPath: process.execPath, platform: process.platform, env: {}, exitCode: 0 };
+const expectedJson = JSON.stringify({
+  total: FIXTURES.invalidAmount.total,
+  errorCount: FIXTURES.invalidAmount.errorCount,
+  warnings: Array(FIXTURES.invalidAmount.warningCount).fill('warning'),
+});
+vm.runInNewContext(verifySource, {
+  __dirname,
+  console: {
+    log: (message) => verifyOutput.logs.push(message),
+    error: (message) => verifyOutput.errors.push(message),
+  },
+  process: verifyProcess,
+  require: (moduleName) => {
+    if (moduleName === 'child_process') {
+      return {
+        spawnSync: (_command, args) => {
+          if (args.includes('--json') && !args.includes('--csv')) {
+            return { status: 0, stdout: expectedJson, stderr: 'unexpected diagnostic' };
+          }
+          if (args.includes('--summary') && !args.includes('--csv')) {
+            return {
+              status: 0,
+              stdout: [
+                'CSV 처리 요약',
+                `- 합계: ${FIXTURES.invalidAmount.total}`,
+                `- 오류 행 수: ${FIXTURES.invalidAmount.errorCount}`,
+                `- 경고 수: ${FIXTURES.invalidAmount.warningCount}`,
+              ].join('\n'),
+              stderr: '',
+            };
+          }
+          if (args.includes('--csv')) {
+            return {
+              status: 0,
+              stdout: `total,errorCount,warningCount\n${FIXTURES.invalidAmount.total},${FIXTURES.invalidAmount.errorCount},${FIXTURES.invalidAmount.warningCount}`,
+              stderr: '',
+            };
+          }
+          if (args.includes('missing.csv')) {
+            return { status: 1, stdout: '', stderr: 'CSV 파일을 찾을 수 없습니다: missing.csv' };
+          }
+          if (args.includes('--help')) {
+            return { status: 0, stdout: '사용법: node app.js [CSV 파일] [--json | --summary | --csv]', stderr: '' };
+          }
+          if (args.includes(FIXTURES.missingAmountColumn.path)) {
+            return { status: 1, stdout: '', stderr: FIXTURES.missingAmountColumn.errorMessage };
+          }
+          if (args[0] === '/d' || args[0] === 'test') {
+            return { status: 0, stdout: '모든 테스트 통과', stderr: '' };
+          }
+          return {
+            status: 0,
+            stdout: `amount 합계: ${FIXTURES.valid.total}, 오류 행 수: ${FIXTURES.valid.errorCount}`,
+            stderr: '',
+          };
+        },
+      };
+    }
+    if (moduleName === 'path') return path;
+    if (moduleName === './fixtures/expectations') return FIXTURES;
+    throw new Error(`Unexpected verify.js dependency: ${moduleName}`);
+  },
+});
+assert.strictEqual(verifyProcess.exitCode, 1);
+assert.ok(verifyOutput.errors.some((message) => message.includes('[FAIL] JSON CLI 출력')));
+assert.ok(verifyOutput.errors.some((message) => message.includes('stderr: unexpected diagnostic')));
 
 console.log('모든 테스트 통과');
