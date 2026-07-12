@@ -40,3 +40,16 @@ npm run verify
 
 .\\scripts\\run-autonomous-loop.ps1
 
+모델과 reasoning 수준을 명시하려면 다음과 같이 실행한다.
+
+```powershell
+pwsh -NoProfile -File .\scripts\run-autonomous-loop.ps1 `
+  -Model gpt-5.6-terra `
+  -ReasoningEffort medium `
+  -MaxIterations 10 `
+  -MaxMinutes 120 `
+  -MaxConsecutiveFailures 3 `
+  -MaxNoProgress 2 `
+  -GoalPath .\AUTONOMOUS_GOAL.md
+```
+
