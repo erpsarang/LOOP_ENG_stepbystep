@@ -14,6 +14,11 @@ param(
 
   [string]$GoalPath = 'AUTONOMOUS_GOAL.md',
 
+  [string]$Model = 'gpt-5.6-terra',
+
+  [ValidateSet('low', 'medium', 'high')]
+  [string]$ReasoningEffort = 'medium',
+
   [switch]$SmokeTest,
 
   [ValidateSet('ProgressThenNoProgress', 'ConsecutiveFailures', 'Encoding')]
@@ -23,6 +28,31 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $script:RunDeadline = $null
+
+function Get-CodexExecArguments {
+  param(
+    [Parameter(Mandatory)] [string]$RepositoryRoot,
+    [Parameter(Mandatory)] [string]$Prompt,
+    [string]$OutputLastMessage
+  )
+
+  $arguments = @(
+    'exec', '--model', $Model,
+    '-c', "model_reasoning_effort=`"$ReasoningEffort`"",
+    '--sandbox', 'workspace-write', '-c', 'approval_policy="never"', '--cd', $RepositoryRoot
+  )
+  if ($OutputLastMessage) { $arguments += @('--output-last-message', $OutputLastMessage) }
+  return $arguments + @($Prompt)
+}
+
+function Get-CodexReviewArguments {
+  return @(
+    'review',
+    '-c', "model=`"$Model`"",
+    '-c', "model_reasoning_effort=`"$ReasoningEffort`"",
+    '-c', 'approval_policy="never"', '-c', 'sandbox_mode="workspace-write"', '--uncommitted'
+  )
+}
 
 function Invoke-NativeLogged {
   param(
@@ -188,10 +218,8 @@ Do not edit files. Classify the review outcome only. End with exactly REVIEW_PAS
 actionable issue, or REVIEW_CHANGES_REQUESTED when it requests any correction.
 "@
   $beforeFingerprint = Get-WorkingTreeFingerprint
-  Invoke-NativeLogged -Command 'codex' -Arguments @(
-    'exec', '--sandbox', 'workspace-write', '-c', 'approval_policy="never"', '--cd', $RepositoryRoot,
-    '--output-last-message', $DecisionPath, $prompt
-  ) -LogPath $DecisionLog | Out-Null
+  Invoke-NativeLogged -Command 'codex' -Arguments (Get-CodexExecArguments -RepositoryRoot $RepositoryRoot `
+    -Prompt $prompt -OutputLastMessage $DecisionPath) -LogPath $DecisionLog | Out-Null
   if ((Get-WorkingTreeFingerprint) -ne $beforeFingerprint) {
     throw 'Review classifier modified repository files.'
   }
@@ -462,10 +490,8 @@ The first nonempty line must be `TASK: <specific concise improvement>`.
 Do not repeat any previously failed task listed here: $($skippedTasks -join ' | ')
 "@
     $analysisMessage = Join-Path $iterationDirectory 'analysis.md'
-    Invoke-NativeLogged -Command 'codex' -Arguments @(
-      'exec', '--sandbox', 'workspace-write', '-c', 'approval_policy="never"', '--cd', $repoRoot,
-      '--output-last-message', $analysisMessage, $analysisPrompt
-    ) -LogPath (Join-Path $iterationDirectory 'analysis.log') | Out-Null
+    Invoke-NativeLogged -Command 'codex' -Arguments (Get-CodexExecArguments -RepositoryRoot $repoRoot `
+      -Prompt $analysisPrompt -OutputLastMessage $analysisMessage) -LogPath (Join-Path $iterationDirectory 'analysis.log') | Out-Null
     if ((Get-GitOutput -Arguments @('status', '--porcelain')) -ne '') { throw 'Analysis stage modified repository files.' }
     $analysisText = Get-Content -LiteralPath $analysisMessage -Raw
     $taskLine = @($analysisText -split '\r?\n' | Where-Object { $_ -match '^TASK:\s*\S' } | Select-Object -First 1)
@@ -485,9 +511,8 @@ Read AGENTS.md, the goal file at $goalFullPath, and this analysis file: $analysi
 Add only the focused regression or quality test needed for the selected improvement. Do not implement the
 production fix, do not weaken existing tests, do not edit runner control files, and do not commit.
 "@
-      Invoke-NativeLogged -Command 'codex' -Arguments @(
-        'exec', '--sandbox', 'workspace-write', '-c', 'approval_policy="never"', '--cd', $repoRoot, $testPrompt
-      ) -LogPath (Join-Path $iterationDirectory 'test-agent.log') | Out-Null
+      Invoke-NativeLogged -Command 'codex' -Arguments (Get-CodexExecArguments -RepositoryRoot $repoRoot `
+        -Prompt $testPrompt) -LogPath (Join-Path $iterationDirectory 'test-agent.log') | Out-Null
       Invoke-NativeLogged -Command $env:ComSpec -Arguments @('/d', '/s', '/c', 'npm test') -LogPath (Join-Path $iterationDirectory 'test-before-implementation.log') -AllowFailure | Out-Null
 
       if (Test-TimeLimit -StartedAt $startedAt -Minutes $MaxMinutes) { throw 'Time limit reached before implementation.' }
@@ -498,9 +523,8 @@ Inspect the current uncommitted test changes and implement the smallest producti
 that satisfies the selected improvement. Preserve public behavior, do not weaken tests, do not edit runner
 control files, and do not commit.
 "@
-      Invoke-NativeLogged -Command 'codex' -Arguments @(
-        'exec', '--sandbox', 'workspace-write', '-c', 'approval_policy="never"', '--cd', $repoRoot, $implementationPrompt
-      ) -LogPath (Join-Path $iterationDirectory 'implementation.log') | Out-Null
+      Invoke-NativeLogged -Command 'codex' -Arguments (Get-CodexExecArguments -RepositoryRoot $repoRoot `
+        -Prompt $implementationPrompt) -LogPath (Join-Path $iterationDirectory 'implementation.log') | Out-Null
 
       $changed = Get-GitOutput -Arguments @('status', '--porcelain')
       if ($changed -eq '') {
@@ -510,9 +534,8 @@ control files, and do not commit.
         if (Test-TimeLimit -StartedAt $startedAt -Minutes $MaxMinutes) { throw 'Time limit reached before verify.' }
         Invoke-NativeLogged -Command $env:ComSpec -Arguments @('/d', '/s', '/c', 'npm run verify') -LogPath (Join-Path $iterationDirectory 'verify-before-review.log') | Out-Null
 
-        $reviewResult = Invoke-NativeLogged -Command 'codex' -Arguments @(
-          'review', '-c', 'approval_policy="never"', '-c', 'sandbox_mode="workspace-write"', '--uncommitted'
-        ) -LogPath (Join-Path $iterationDirectory 'review.log')
+        $reviewResult = Invoke-NativeLogged -Command 'codex' -Arguments (Get-CodexReviewArguments) `
+          -LogPath (Join-Path $iterationDirectory 'review.log')
         $reviewDecision = Get-ReviewDecision -ReviewLog (Join-Path $iterationDirectory 'review.log') `
           -DecisionPath (Join-Path $iterationDirectory 'review-decision.md') `
           -DecisionLog (Join-Path $iterationDirectory 'review-decision.log') -RepositoryRoot $repoRoot
@@ -524,15 +547,13 @@ Read AGENTS.md, the goal file at $goalFullPath, and the independent review at:
 $(Join-Path $iterationDirectory 'review.log')
 Apply only the concrete review fixes. Do not broaden scope, weaken tests, edit runner control files, or commit.
 "@
-          Invoke-NativeLogged -Command 'codex' -Arguments @(
-            'exec', '--sandbox', 'workspace-write', '-c', 'approval_policy="never"', '--cd', $repoRoot, $correctionPrompt
-          ) -LogPath (Join-Path $iterationDirectory 'correction.log') | Out-Null
+          Invoke-NativeLogged -Command 'codex' -Arguments (Get-CodexExecArguments -RepositoryRoot $repoRoot `
+            -Prompt $correctionPrompt) -LogPath (Join-Path $iterationDirectory 'correction.log') | Out-Null
           Assert-AllowedChanges
           Invoke-NativeLogged -Command $env:ComSpec -Arguments @('/d', '/s', '/c', 'npm run verify') -LogPath (Join-Path $iterationDirectory 'verify-after-correction.log') | Out-Null
 
-          $finalReview = Invoke-NativeLogged -Command 'codex' -Arguments @(
-            'review', '-c', 'approval_policy="never"', '-c', 'sandbox_mode="workspace-write"', '--uncommitted'
-          ) -LogPath (Join-Path $iterationDirectory 'review-after-correction.log')
+          $finalReview = Invoke-NativeLogged -Command 'codex' -Arguments (Get-CodexReviewArguments) `
+            -LogPath (Join-Path $iterationDirectory 'review-after-correction.log')
           $finalDecision = Get-ReviewDecision -ReviewLog (Join-Path $iterationDirectory 'review-after-correction.log') `
             -DecisionPath (Join-Path $iterationDirectory 'review-after-correction-decision.md') `
             -DecisionLog (Join-Path $iterationDirectory 'review-after-correction-decision.log') -RepositoryRoot $repoRoot
