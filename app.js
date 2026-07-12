@@ -28,6 +28,9 @@ function parseCsv(text) {
     } else if (quotedFieldClosed && char !== ',' && char !== '\n' && char !== '\r') {
       throw new Error('CSV의 따옴표 형식이 올바르지 않습니다.');
     } else if (char === '"') {
+      if (fieldStarted) {
+        throw new Error('CSV의 따옴표 형식이 올바르지 않습니다.');
+      }
       fieldStarted = true;
       rowHasQuotedField = true;
       quoted = true;

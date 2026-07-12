@@ -51,6 +51,7 @@ assert.deepStrictEqual(parseCsv(quotedCrLfCsv), [
 assert.deepStrictEqual(sumAmount(quotedCrLfCsv), { total: 10, errorCount: 0 });
 assert.throws(() => parseCsv('item,amount\n"A,10\n'), /따옴표가 닫히지 않았습니다/);
 assert.throws(() => parseCsv('item,amount\n"A"x,10\n'), /따옴표 형식/);
+assert.throws(() => parseCsv('item,amount\nA"bad",10\n'), /따옴표 형식/);
 assert.deepStrictEqual(parseCsv('\uFEFFitem,amount\nA,10\n'), [
   ['item', 'amount'],
   ['A', '10'],
