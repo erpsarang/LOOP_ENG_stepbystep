@@ -24,11 +24,12 @@ const checks = [
     command: nodeCommand,
     args: ['app.js', FIXTURES.valid.path],
     expectedStatus: FIXTURES.valid.expectedStatus,
-    validate: ({ stdout }) => stdout.includes(
-      `amount 합계: ${FIXTURES.valid.total}, 오류 행 수: ${FIXTURES.valid.errorCount}`,
-    )
-      ? null
-      : '예상 합계와 오류 행 수를 찾을 수 없습니다.',
+    validate: ({ stdout, stderr }) => {
+      const expected = `amount 합계: ${FIXTURES.valid.total}, 오류 행 수: ${FIXTURES.valid.errorCount}`;
+      return stdout.trim() === expected && stderr === ''
+        ? null
+        : '일반 출력 또는 stderr가 예상과 다릅니다.';
+    },
   },
   {
     name: 'JSON CLI 출력',
