@@ -43,6 +43,12 @@ assert.deepStrictEqual(parseCsv('item,amount\n"A ""quoted"" item",10\n'), [
   ['item', 'amount'],
   ['A "quoted" item', '10'],
 ]);
+const quotedCrLfCsv = 'item,description,amount\r\nA,"first line\r\nsecond line",10\r\n';
+assert.deepStrictEqual(parseCsv(quotedCrLfCsv), [
+  ['item', 'description', 'amount'],
+  ['A', 'first line\r\nsecond line', '10'],
+]);
+assert.deepStrictEqual(sumAmount(quotedCrLfCsv), { total: 10, errorCount: 0 });
 assert.throws(() => parseCsv('item,amount\n"A,10\n'), /따옴표가 닫히지 않았습니다/);
 assert.deepStrictEqual(parseCsv('\uFEFFitem,amount\nA,10\n'), [
   ['item', 'amount'],
